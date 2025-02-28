@@ -1,0 +1,21 @@
+{
+  "name": "assets-typescript",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "typescript": "^5.2.2",
+    "vite": "^5.3.4"
+  },
+  "dependencies": {
+    "@commercetools/platform-sdk": "^4.0.0",
+    "@commercetools/sdk-client-v2": "^2.0.0",
+    "dotenv": "^16.0.3"
+  },
+  "packageManager": "yarn@1.22.22"
+}
