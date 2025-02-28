@@ -13,6 +13,9 @@ interface CommercetoolsConfig {
   scopes: string[];
 }
 
+console.log(import.meta.env);
+
+
 const config: CommercetoolsConfig = {
   projectKey: import.meta.env.CTP_PROJECT_KEY,
   authUrl: import.meta.env.CTP_AUTH_URL,
