@@ -1,13 +1,16 @@
 deployAs:
   - name: assets
     applicationType: assets
+  - name: service
+    applicationType: service
+    endpoint: /service
 inheritAs:
   configuration:
     standardConfiguration:
       - key: CTP_REGION
         description: commercetools Composable Commerce API region
+        default: us-central1.gcp
         required: true
-        default: "us-central1.gcp"
     securedConfiguration:
       - key: CTP_PROJECT_KEY
         description: commercetools Composable Commerce project key
