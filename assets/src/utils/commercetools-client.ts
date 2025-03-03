@@ -62,6 +62,7 @@ export async function makeCtRequest(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<any> {
+  console.log(import.meta.env);
   const token = await getAccessToken();
   
   const response = await fetch(
