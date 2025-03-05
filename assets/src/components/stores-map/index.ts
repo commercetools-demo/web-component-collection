@@ -102,9 +102,22 @@ export default class StoresMap extends HTMLElement {
         .map-container {
           flex: 2;
         }
+        .error-container {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          height: 100%;
+          width: 100%;
+          padding: var(--stores-map-error-padding, 2rem);
+        }
         .error-message {
           color: var(--stores-map-error-color, red);
-          padding: 1rem;
+          text-align: center;
+          font-size: var(--stores-map-error-font-size, 1rem);
+          padding: var(--stores-map-error-padding, 1rem);
+          background: var(--stores-map-error-bg, #fff3f3);
+          border-radius: var(--stores-map-error-radius, 4px);
+          border: var(--stores-map-error-border, 1px solid #ffcdd2);
         }
       </style>
 
@@ -263,14 +276,21 @@ export default class StoresMap extends HTMLElement {
   }
 
   private showError(message: string) {
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'error-message';
-    errorDiv.textContent = message;
-    
     const modalContent = this.shadowRoot?.querySelector('.modal-content');
     if (modalContent) {
-      modalContent.innerHTML = '';
-      modalContent.appendChild(errorDiv);
+      modalContent.innerHTML = `
+        <button class="close-button">&times;</button>
+        <div class="error-container">
+          <div class="error-message">${message}</div>
+        </div>
+      `;
+
+      // Reattach the close button event listener
+      const closeButton = modalContent.querySelector('.close-button');
+      closeButton?.addEventListener('click', () => {
+        const modal = this.shadowRoot?.querySelector('.modal');
+        modal?.classList.remove('active');
+      });
     }
   }
 }

@@ -3,6 +3,8 @@
 
 A customizable store locator component with Google Maps integration.
 
+![StoresMap](../../static/stores-map.png)
+
 ## Usage
 
 ```html
@@ -50,6 +52,16 @@ A customizable store locator component with Google Maps integration.
 --stores-map-modal-height: 80vh;
 --stores-map-divider: 1px solid #eee;
 --stores-map-error-color: red;
+```
+
+### Error
+```css
+--stores-map-error-color: red;
+--stores-map-error-bg: #fff3f3;
+--stores-map-error-border: 1px solid #ffcdd2;
+--stores-map-error-radius: 4px;
+--stores-map-error-padding: 1rem;
+--stores-map-error-font-size: 1rem;
 ```
 
 ### Stores List
