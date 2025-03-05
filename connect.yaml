@@ -9,6 +9,12 @@ deployAs:
         - key: CORS_ALLOWED_ORIGINS
           description: Comma separated list of allowed origins
           required: false
+        - key: GOOGLE_MAPS_API_KEY
+          description: Google Maps API key
+          required: false
+        - key: STORE_RADIUS
+          description: Store radius in kilometers
+          required: false
 inheritAs:
   configuration:
     standardConfiguration:

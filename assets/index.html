@@ -7,7 +7,11 @@
   </head>
   <body>
     <div id="app">
-      <cart-list></cart-list>
+      <stores-map 
+  base-url="http://localhost:8080/service" 
+  locale="en-US">
+  <span slot="trigger">Select Store</span>
+</stores-map>
 
     </div>
     <script type="module" src="/src/main.ts"></script>
