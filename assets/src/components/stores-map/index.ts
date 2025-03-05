@@ -5,9 +5,20 @@ import { Store } from '../../types/store';
 import './stores-list';
 import './google-map';
 
+interface MapMovedEvent extends CustomEvent {
+  detail: { lat: number; lng: number };
+}
+
+interface MarkerSelectedEvent extends CustomEvent {
+  detail: Store;
+}
+
+interface StoreSelectedEvent extends CustomEvent {
+  detail: Store;
+}
+
 export default class StoresMap extends HTMLElement {
   private api: StoresApiService;
-  private stores: Store[] = [];
   private debouncedLoadStores: (lat: number, lng: number) => void;
 
   static get observedAttributes() {
@@ -157,20 +168,23 @@ export default class StoresMap extends HTMLElement {
       modal?.classList.remove('active');
     });
 
-    googleMap?.addEventListener('mapMoved', async (e: CustomEvent) => {
-      const { lat, lng } = e.detail;
+    googleMap?.addEventListener('mapMoved', (async (e: Event) => {
+      const customEvent = e as MapMovedEvent;
+      const { lat, lng } = customEvent.detail;
       await this.debouncedLoadStores(lat, lng);
-    });
+    }) as EventListener);
 
-    googleMap?.addEventListener('markerSelected', (e: CustomEvent) => {
-      const store = e.detail as Store;
+    googleMap?.addEventListener('markerSelected', ((e: Event) => {
+      const customEvent = e as MarkerSelectedEvent;
+      const store = customEvent.detail;
       if (storesList instanceof HTMLElement) {
         (storesList as any).setSelectedStoreId(store.storeId);
       }
-    });
+    }) as EventListener);
 
-    storesList?.addEventListener('storeSelected', (e: CustomEvent) => {
-      const store = e.detail as Store;
+    storesList?.addEventListener('storeSelected', ((e: Event) => {
+      const customEvent = e as StoreSelectedEvent;
+      const store = customEvent.detail;
       if (store.storeId) {
         SessionStorageUtil.setSelectedStore(this.tagName.toLowerCase(), store);
         this.dispatchEvent(
@@ -181,7 +195,7 @@ export default class StoresMap extends HTMLElement {
           })
         );
       }
-    });
+    }) as EventListener);
   }
 
   private async initializeMap() {
@@ -256,7 +270,6 @@ export default class StoresMap extends HTMLElement {
     try {
       const locale = this.getAttribute('locale');
       const stores = await this.api.getStores(lat, lng, locale || undefined);
-      this.stores = stores;
 
       const storesList = this.shadowRoot?.querySelector('stores-list');
       const googleMap = this.shadowRoot?.querySelector('google-map');
