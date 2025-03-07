@@ -2,6 +2,9 @@ import { Router } from 'express';
 import { logger } from '../utils/logger.utils';
 import { getGoogleMapApiKey } from '../controllers/googleMap.controller';
 import { getStores, getStoreById } from '../controllers/stores.controller';
+import { getProductByIdController } from '../controllers/products.controller';
+import { getProductBySkuController } from '../controllers/products.controller';
+
 
 const serviceRouter = Router();
 
@@ -36,5 +39,9 @@ serviceRouter.get('/getStoreById', async (req, res, next) => {
     next(error);
   }
 });
+
+serviceRouter.get('/products/:id', getProductByIdController);
+
+serviceRouter.get('/products/sku/:sku', getProductBySkuController);
 
 export default serviceRouter;
