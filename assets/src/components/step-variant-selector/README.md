@@ -111,6 +111,7 @@ step-variant-selector {
   --product-name-color: inherit;
   
   /* Selected variant info styling */
+  --selected-variant-info-display: block;
   --selected-variant-info-margin-top: 16px;
   --selected-variant-info-padding: 12px;
   --selected-variant-info-background: #f5f5f5;

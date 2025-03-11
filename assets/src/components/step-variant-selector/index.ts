@@ -365,6 +365,7 @@ class StepVariantSelector extends HTMLElement {
         }
         
         .selected-variant-info {
+          display: var(--selected-variant-info-display, block);
           margin-top: var(--selected-variant-info-margin-top, 16px);
           padding: var(--selected-variant-info-padding, 12px);
           background: var(--selected-variant-info-background, #f5f5f5);
