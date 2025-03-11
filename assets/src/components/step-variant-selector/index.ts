@@ -142,6 +142,56 @@ class StepVariantSelector extends HTMLElement {
 
     // Combine master variant and variants into allVariants
     this.allVariants = [this.product.masterVariant, ...this.product.variants];
+    
+    // Preselect buttons based on the initial SKU
+    this.preselectButtonsForSku(this.sku);
+  }
+
+  private preselectButtonsForSku(sku: string) {
+    // Find the variant that matches the SKU
+    const variant = this.allVariants.find(v => v.sku === sku);
+    
+    if (!variant || !variant.attributes) {
+      return;
+    }
+    
+    // Clear any existing selections
+    this.selectedValues.clear();
+    
+    // For each selector, find the matching attribute and set the selected value
+    for (const selectorName of this.selectors) {
+      const attribute = variant.attributes.find(attr => attr.name === selectorName);
+      if (attribute) {
+        this.selectedValues.set(selectorName, attribute.value);
+      }
+    }
+    
+    // Store this as the last selected variant
+    this.lastSelectedVariant = variant;
+    
+    // Dispatch events to notify about the preselection
+    // First, dispatch the variant-selection-changed event
+    this.dispatchEvent(new CustomEvent('variant-selection-changed', {
+      bubbles: true,
+      composed: true,
+      detail: {
+        selectedValues: Object.fromEntries(this.selectedValues),
+        selectedVariant: variant
+      }
+    }));
+    
+    // Then, dispatch the sku-selected event
+    if (variant.sku) {
+      this.dispatchEvent(new CustomEvent('sku-selected', {
+        bubbles: true,
+        composed: true,
+        detail: {
+          sku: variant.sku,
+          variant: variant,
+          product: this.product
+        }
+      }));
+    }
   }
 
   private getDistinctAttributeValues(attributeName: string, filteredVariants: ProductVariant[]): any[] {
@@ -254,16 +304,12 @@ class StepVariantSelector extends HTMLElement {
 
   private getAttributeLabel(attributeName: string): string {
     if (!this.productType?.attributes) return attributeName;
-    console.log('productType', this.productType, attributeName);
-    
 
     const attribute = this.productType.attributes.find((attr: any) => attr.name === attributeName);
     if (!attribute?.label) return attributeName;
-    console.log('attribute', attribute);
 
     // Try to get the localized label
     if (typeof attribute.label === 'object') {
-      console.log('attribute.label', attribute.label[this.locale], attribute.label['en-US'], attributeName);
       return attribute.label[this.locale] || attribute.label['en-US'] || attributeName;
     }
 

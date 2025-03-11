@@ -59,6 +59,8 @@ The `step-variant-selector` component accepts the following attributes:
 
 2. **Dynamic Updates**: While the `sku` attribute is fixed after initialization, other attributes like `selectors` and `locale` can be updated dynamically.
 
+3. **Automatic Preselection**: When the component loads with a specific SKU, it automatically preselects all the buttons that correspond to the attributes of that SKU. This provides a better user experience by showing the complete selection for the current SKU without requiring user interaction.
+
 ### Events
 
 The component emits the following events:
@@ -77,15 +79,10 @@ The component emits the following events:
 ```javascript
 // Listen for any selection changes
 document.querySelector('step-variant-selector').addEventListener('variant-selection-changed', (event) => {
-  console.log('Selected values:', event.detail.selectedValues);
-  console.log('Selected variant:', event.detail.selectedVariant);
 });
 
 // Listen specifically for when a SKU is selected
 document.querySelector('step-variant-selector').addEventListener('sku-selected', (event) => {
-  console.log('Selected SKU:', event.detail.sku);
-  console.log('Selected variant:', event.detail.variant);
-  
   // You can use this event to add the product to cart, update pricing, etc.
   addToCart(event.detail.sku, 1);
 });
