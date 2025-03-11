@@ -85,7 +85,11 @@ class ProductPrices extends HTMLElement {
   }
 
   private renderPrices(productProjection: ProductProjection) {
-    const prices = productProjection.masterVariant?.prices || [];
+    let prices = productProjection.masterVariant?.prices || [];
+      // Filter prices by currency if priceCurrency is defined
+      if (this.priceCurrency) {
+        prices = prices.filter(price => price.value.currencyCode === this.priceCurrency);
+      }
     
     const styles = `
       <style>
