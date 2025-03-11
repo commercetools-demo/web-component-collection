@@ -44,6 +44,7 @@ class StepVariantSelector extends HTMLElement {
   private lastSelectedVariant: ProductVariant | null = null;
   private dataLoaded: boolean = false;
   private initialized: boolean = false;
+  private dataIsLoading: boolean = false;
 
   constructor() {
     super();
@@ -83,14 +84,16 @@ class StepVariantSelector extends HTMLElement {
           break;
       }
       
-      if (!this.initialized || name !== 'sku') {
+      // Only fetch and render if not initialized or if the change is not for sku
+      // And only if we're not already loading data
+      if ((!this.initialized || name !== 'sku') && !this.dataIsLoading) {
         this.fetchAndRenderVariants();
       }
     }
   }
 
   connectedCallback() {
-    if (!this.dataLoaded) {
+    if (!this.dataLoaded && !this.dataIsLoading) {
       this.fetchAndRenderVariants();
     }
     this.addEventListener('group-selection-changed', this.handleGroupSelectionChanged as EventListener);
@@ -102,6 +105,15 @@ class StepVariantSelector extends HTMLElement {
 
   private async fetchAndRenderVariants() {
     if (!this.baseUrl || !this.sku) return;
+    
+    // Prevent multiple concurrent API calls
+    if (this.dataIsLoading) {
+      console.log('Data is already loading, skipping duplicate request');
+      return;
+    }
+    
+    this.dataIsLoading = true;
+    this.renderLoading(); // Show loading indicator
 
     try {
       const url = new URL(`${this.baseUrl}/products/sku/${this.sku}`);
@@ -118,12 +130,14 @@ class StepVariantSelector extends HTMLElement {
     } catch (error) {
       console.error('Error fetching product data:', error);
       this.renderError();
+    } finally {
+      this.dataIsLoading = false;
     }
   }
 
   private async fetchProductType() {
     if (!this.product?.productType?.id) return;
-
+    
     try {
       const url = new URL(`${this.baseUrl}/product-types/${this.product.productType.id}`);
       const response = await fetch(url.toString());
@@ -447,6 +461,48 @@ class StepVariantSelector extends HTMLElement {
         }
       </style>
       <div class="error">Failed to load product data</div>
+    `;
+  }
+
+  // Add a method to render a loading indicator
+  private renderLoading() {
+    const styles = `
+      <style>
+        .loading-container {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          padding: 20px;
+          font-family: var(--step-variant-selector-font-family, system-ui, -apple-system, sans-serif);
+        }
+        
+        .loading-spinner {
+          border: 4px solid rgba(0, 0, 0, 0.1);
+          border-radius: 50%;
+          border-top: 4px solid var(--loading-spinner-color, #3498db);
+          width: 30px;
+          height: 30px;
+          animation: spin 1s linear infinite;
+          margin-right: 10px;
+        }
+        
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+          color: var(--loading-text-color, inherit);
+        }
+      </style>
+    `;
+
+    this.shadow.innerHTML = `
+      ${styles}
+      <div class="loading-container">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading variant data...</div>
+      </div>
     `;
   }
 }

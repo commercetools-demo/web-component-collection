@@ -118,6 +118,10 @@ step-variant-selector {
   --selected-variant-info-border: none;
   --selected-variant-info-color: inherit;
   
+  /* Loading indicator styling */
+  --loading-spinner-color: #3498db;
+  --loading-text-color: inherit;
+  
   /* Error styling */
   --error-color: red;
   --error-padding: 8px;
