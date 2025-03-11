@@ -49,8 +49,15 @@ npm run build
 The `step-variant-selector` component accepts the following attributes:
 
 - `baseurl` (required): The base URL of your API
-- `sku` (required): The SKU of the product to fetch
+- `sku` (required): The SKU of the product to fetch. **Note: The component will not react to changes in this attribute after initial load. To use a different SKU, you must create a new instance of the component.**
 - `selectors` (required): A JSON array of strings representing the attribute names to use as selectors, in the order they should be displayed
+- `locale` (optional): The locale to use for product information, defaults to 'en-US'
+
+### Behavior Notes
+
+1. **SKU Changes**: The component ignores changes to the `sku` attribute after it has been initialized. This is by design to prevent unexpected behavior when the product data changes. If you need to display a different product, you should create a new instance of the component.
+
+2. **Dynamic Updates**: While the `sku` attribute is fixed after initialization, other attributes like `selectors` and `locale` can be updated dynamically.
 
 ### Events
 

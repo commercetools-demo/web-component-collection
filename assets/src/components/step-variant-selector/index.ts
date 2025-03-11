@@ -43,6 +43,7 @@ class StepVariantSelector extends HTMLElement {
   private shadow: ShadowRoot;
   private lastSelectedVariant: ProductVariant | null = null;
   private dataLoaded: boolean = false;
+  private initialized: boolean = false;
 
   constructor() {
     super();
@@ -61,8 +62,12 @@ class StepVariantSelector extends HTMLElement {
           this.dataLoaded = false;
           break;
         case 'sku':
-          this.sku = newValue;
-          this.dataLoaded = false;
+          if (!this.initialized) {
+            this.sku = newValue;
+            this.dataLoaded = false;
+          } else {
+            console.warn('SKU changes after initialization are ignored. Component must be recreated to use a different SKU.');
+          }
           break;
         case 'selectors':
           try {
@@ -77,7 +82,10 @@ class StepVariantSelector extends HTMLElement {
           this.locale = newValue;
           break;
       }
-      this.fetchAndRenderVariants();
+      
+      if (!this.initialized || name !== 'sku') {
+        this.fetchAndRenderVariants();
+      }
     }
   }
 
@@ -105,6 +113,7 @@ class StepVariantSelector extends HTMLElement {
       await this.fetchProductType();
       this.processProductData();
       this.dataLoaded = true;
+      this.initialized = true;
       this.render();
     } catch (error) {
       console.error('Error fetching product data:', error);
