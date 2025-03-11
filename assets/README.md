@@ -12,3 +12,67 @@ A component that displays a list of available prices for a product SKU, showing 
 
 ### [StepVariantSelector](./src/components/step-variant-selector/README.md)
 A component that allows users to select a variant of a product by selecting values for a set of attributes.
+
+
+## Use in React
+Add the following script to your HTML file or use the script tag in your React component:
+
+```html
+<script
+      src="<path-to-deployed-asset-connector>/components.js"
+      type="module"
+></script>
+```
+Create a new component to wrap the component for example `StepVariantSelector.tsx`:
+
+```jsx
+import React, { useRef, useEffect } from 'react';
+
+interface Props {
+  baseurl?: string;
+  sku?: string;
+  selectors?: string;
+  locale?: string;
+  onChangeSku?: (sku: string) => void;
+}
+
+const StepVariantSelector: React.FC<Props> = ({ onChangeSku, ...props }) => {
+  const ref = useRef<HTMLDivElement>(null);
+
+  const eventListener = (event: any) => {
+    onChangeSku?.(event.detail.sku);
+  };
+
+  useEffect(() => {
+    if (ref.current) {
+      const element = document.createElement('step-variant-selector');
+      element.addEventListener('sku-selected', eventListener);
+
+      Object.entries(props).forEach(([key, value]) => {
+        if (typeof value === 'string') {
+          element.setAttribute(key, value);
+        }
+      });
+
+      ref.current.innerHTML = '';
+      ref.current.appendChild(element);
+    }
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      // override styles here
+      style={
+        {
+          '--selector-button-selected-background': 'rgb(23 58 95)',
+        } as React.CSSProperties
+      }
+    />
+  );
+};
+
+export default StepVariantSelector;
+```
+
+
