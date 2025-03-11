@@ -3,6 +3,7 @@ import type { Cart } from '@commercetools/platform-sdk';
 
 class CartList extends HTMLElement {
   private carts: Cart[] = [];
+  private dataLoaded: boolean = false;
 
   constructor() {
     super();
@@ -10,14 +11,17 @@ class CartList extends HTMLElement {
   }
 
   async connectedCallback() {
-    await this.fetchCarts();
-    this.render();
+    if (!this.dataLoaded) {
+      await this.fetchCarts();
+      this.render();
+    }
   }
 
   private async fetchCarts() {
     try {
       const response = await makeCtRequest('/carts');
       this.carts = response.results;
+      this.dataLoaded = true;
     } catch (error) {
       console.error('Error fetching carts:', error);
     }

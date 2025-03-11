@@ -20,6 +20,7 @@ interface StoreSelectedEvent extends CustomEvent {
 export default class StoresMap extends HTMLElement {
   private api: StoresApiService;
   private debouncedLoadStores: (lat: number, lng: number) => void;
+  private mapInitialized: boolean = false;
 
   static get observedAttributes() {
     return ['base-url', 'selected-store-id', 'locale'];
@@ -40,6 +41,7 @@ export default class StoresMap extends HTMLElement {
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     if (name === 'base-url' && oldValue !== newValue) {
       this.api = new StoresApiService(newValue);
+      this.mapInitialized = false;
     }
     if (name === 'selected-store-id' && oldValue !== newValue) {
       const storesList = this.shadowRoot?.querySelector('stores-list');
@@ -161,7 +163,10 @@ export default class StoresMap extends HTMLElement {
 
     triggerButton?.addEventListener('click', async () => {
       modal?.classList.add('active');
-      await this.initializeMap();
+      if (!this.mapInitialized) {
+        await this.initializeMap();
+        this.mapInitialized = true;
+      }
     });
 
     closeButton?.addEventListener('click', () => {

@@ -72,37 +72,24 @@ class SelectorGroup extends HTMLElement {
           margin-bottom: var(--selector-group-margin-bottom, 16px);
           font-family: var(--selector-group-font-family, system-ui, -apple-system, sans-serif);
           
-          /* CSS Variables for styling */
-          --selector-group-margin-bottom: 16px;
-          --selector-group-font-family: system-ui, -apple-system, sans-serif;
-          
-          --selector-group-label-font-weight: bold;
-          --selector-group-label-margin-bottom: 8px;
-          --selector-group-label-text-transform: capitalize;
-          --selector-group-label-color: inherit;
-          --selector-group-label-font-size: inherit;
-          
-          --selector-buttons-display: flex;
-          --selector-buttons-flex-wrap: wrap;
-          --selector-buttons-gap: 8px;
-          --selector-buttons-justify-content: flex-start;
-          --selector-buttons-align-items: center;
+          /* CSS Variables for styling - only use fallback values, don't define them here */
+          /* This allows the variables to be set from outside */
         }
         
         .selector-group-label {
-          font-weight: var(--selector-group-label-font-weight);
-          margin-bottom: var(--selector-group-label-margin-bottom);
-          text-transform: var(--selector-group-label-text-transform);
-          color: var(--selector-group-label-color);
-          font-size: var(--selector-group-label-font-size);
+          font-weight: var(--selector-group-label-font-weight, bold);
+          margin-bottom: var(--selector-group-label-margin-bottom, 8px);
+          text-transform: var(--selector-group-label-text-transform, capitalize);
+          color: var(--selector-group-label-color, inherit);
+          font-size: var(--selector-group-label-font-size, inherit);
         }
         
         .selector-buttons {
-          display: var(--selector-buttons-display);
-          flex-wrap: var(--selector-buttons-flex-wrap);
-          gap: var(--selector-buttons-gap);
-          justify-content: var(--selector-buttons-justify-content);
-          align-items: var(--selector-buttons-align-items);
+          display: var(--selector-buttons-display, flex);
+          flex-wrap: var(--selector-buttons-flex-wrap, wrap);
+          gap: var(--selector-buttons-gap, 8px);
+          justify-content: var(--selector-buttons-justify-content, flex-start);
+          align-items: var(--selector-buttons-align-items, center);
         }
       </style>
     `;

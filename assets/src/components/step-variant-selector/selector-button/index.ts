@@ -69,55 +69,37 @@ class SelectorButton extends HTMLElement {
         :host {
           display: inline-block;
           
-          /* CSS Variables for styling */
-          --selector-button-padding: 8px 16px;
-          --selector-button-border: 1px solid #ccc;
-          --selector-button-border-radius: 4px;
-          --selector-button-background: #f5f5f5;
-          --selector-button-color: inherit;
-          --selector-button-font-family: system-ui, -apple-system, sans-serif;
-          --selector-button-font-size: inherit;
-          --selector-button-font-weight: normal;
-          --selector-button-transition: all 0.2s;
-          
-          --selector-button-hover-background: #e9e9e9;
-          --selector-button-hover-color: inherit;
-          --selector-button-hover-border-color: #ccc;
-          
-          --selector-button-selected-background: #4a90e2;
-          --selector-button-selected-color: white;
-          --selector-button-selected-border-color: #3a80d2;
-          
-          --selector-button-disabled-opacity: 0.5;
+          /* CSS Variables for styling - only use fallback values, don't define them here */
+          /* This allows the variables to be set from outside */
         }
         
         .selector-button {
-          padding: var(--selector-button-padding);
-          border: var(--selector-button-border);
-          border-radius: var(--selector-button-border-radius);
-          background: var(--selector-button-background);
-          color: var(--selector-button-color);
-          font-family: var(--selector-button-font-family);
-          font-size: var(--selector-button-font-size);
-          font-weight: var(--selector-button-font-weight);
+          padding: var(--selector-button-padding, 8px 16px);
+          border: var(--selector-button-border, 1px solid #ccc);
+          border-radius: var(--selector-button-border-radius, 4px);
+          background: var(--selector-button-background, #f5f5f5);
+          color: var(--selector-button-color, inherit);
+          font-family: var(--selector-button-font-family, system-ui, -apple-system, sans-serif);
+          font-size: var(--selector-button-font-size, inherit);
+          font-weight: var(--selector-button-font-weight, normal);
           cursor: pointer;
-          transition: var(--selector-button-transition);
+          transition: var(--selector-button-transition, all 0.2s);
         }
         
         .selector-button:hover {
-          background: var(--selector-button-hover-background);
-          color: var(--selector-button-hover-color);
-          border-color: var(--selector-button-hover-border-color);
+          background: var(--selector-button-hover-background, #e9e9e9);
+          color: var(--selector-button-hover-color, inherit);
+          border-color: var(--selector-button-hover-border-color, #ccc);
         }
         
         .selector-button.selected {
-          background: var(--selector-button-selected-background);
-          color: var(--selector-button-selected-color);
-          border-color: var(--selector-button-selected-border-color);
+          background: var(--selector-button-selected-background, #4a90e2);
+          color: var(--selector-button-selected-color, white);
+          border-color: var(--selector-button-selected-border-color, #3a80d2);
         }
         
         .selector-button.disabled {
-          opacity: var(--selector-button-disabled-opacity);
+          opacity: var(--selector-button-disabled-opacity, 0.5);
           cursor: not-allowed;
         }
       </style>

@@ -32,10 +32,17 @@ class ProductPrices extends HTMLElement {
   private priceCountry: string = '';
   private locale: string = '';
   private shadow: ShadowRoot;
+  private dataLoaded: boolean = false;
 
   constructor() {
     super();
     this.shadow = this.attachShadow({ mode: 'open' });
+  }
+
+  connectedCallback() {
+    if (!this.dataLoaded) {
+      this.fetchAndRenderPrices();
+    }
   }
 
   static get observedAttributes() {
@@ -47,15 +54,19 @@ class ProductPrices extends HTMLElement {
       switch (name) {
         case 'baseurl':
           this.baseUrl = newValue;
+          this.dataLoaded = false;
           break;
         case 'sku':
           this.sku = newValue;
+          this.dataLoaded = false;
           break;
         case 'price-currency':
           this.priceCurrency = newValue;
+          this.dataLoaded = false;
           break;
         case 'price-country':
           this.priceCountry = newValue;
+          this.dataLoaded = false;
           break;
         case 'locale':
           this.locale = newValue;
@@ -77,6 +88,7 @@ class ProductPrices extends HTMLElement {
       if (!response.ok) throw new Error('Failed to fetch product data');
 
       const data = await response.json();
+      this.dataLoaded = true;
       this.renderPrices(data);
     } catch (error) {
       console.error('Error fetching product prices:', error);

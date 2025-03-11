@@ -42,6 +42,7 @@ class StepVariantSelector extends HTMLElement {
   private selectedValues: Map<string, any> = new Map();
   private shadow: ShadowRoot;
   private lastSelectedVariant: ProductVariant | null = null;
+  private dataLoaded: boolean = false;
 
   constructor() {
     super();
@@ -57,9 +58,11 @@ class StepVariantSelector extends HTMLElement {
       switch (name) {
         case 'baseurl':
           this.baseUrl = newValue;
+          this.dataLoaded = false;
           break;
         case 'sku':
           this.sku = newValue;
+          this.dataLoaded = false;
           break;
         case 'selectors':
           try {
@@ -68,6 +71,7 @@ class StepVariantSelector extends HTMLElement {
             console.error('Invalid selectors format. Expected JSON array of strings.', e);
             this.selectors = [];
           }
+          this.dataLoaded = false;
           break;
         case 'locale':
           this.locale = newValue;
@@ -78,7 +82,9 @@ class StepVariantSelector extends HTMLElement {
   }
 
   connectedCallback() {
-    this.fetchAndRenderVariants();
+    if (!this.dataLoaded) {
+      this.fetchAndRenderVariants();
+    }
     this.addEventListener('group-selection-changed', this.handleGroupSelectionChanged as EventListener);
   }
 
@@ -98,6 +104,7 @@ class StepVariantSelector extends HTMLElement {
       this.product = await response.json();
       await this.fetchProductType();
       this.processProductData();
+      this.dataLoaded = true;
       this.render();
     } catch (error) {
       console.error('Error fetching product data:', error);
@@ -266,69 +273,43 @@ class StepVariantSelector extends HTMLElement {
           display: block;
           font-family: var(--step-variant-selector-font-family, system-ui, -apple-system, sans-serif);
           
-          /* CSS Variables for styling */
-          --step-variant-selector-font-family: system-ui, -apple-system, sans-serif;
-          --step-variant-selector-margin-bottom: 20px;
-          --step-variant-selector-background: transparent;
-          --step-variant-selector-padding: 0;
-          --step-variant-selector-border: none;
-          --step-variant-selector-border-radius: 0;
-          
-          /* Product info styling */
-          --product-info-margin-bottom: 16px;
-          --product-name-font-size: 1.2em;
-          --product-name-font-weight: bold;
-          --product-name-color: inherit;
-          
-          /* Selected variant info styling */
-          --selected-variant-info-margin-top: 16px;
-          --selected-variant-info-padding: 12px;
-          --selected-variant-info-background: #f5f5f5;
-          --selected-variant-info-border-radius: 4px;
-          --selected-variant-info-border: none;
-          --selected-variant-info-color: inherit;
-          
-          /* Error styling */
-          --error-color: red;
-          --error-padding: 8px;
-          --error-background: transparent;
-          --error-border: none;
-          --error-border-radius: 0;
+          /* CSS Variables for styling - only use fallback values, don't define them here */
+          /* This allows the variables to be set from outside */
         }
         
         .variant-selector {
-          margin-bottom: var(--step-variant-selector-margin-bottom);
-          background: var(--step-variant-selector-background);
-          padding: var(--step-variant-selector-padding);
-          border: var(--step-variant-selector-border);
-          border-radius: var(--step-variant-selector-border-radius);
+          margin-bottom: var(--step-variant-selector-margin-bottom, 20px);
+          background: var(--step-variant-selector-background, transparent);
+          padding: var(--step-variant-selector-padding, 0);
+          border: var(--step-variant-selector-border, none);
+          border-radius: var(--step-variant-selector-border-radius, 0);
         }
         
         .product-info {
-          margin-bottom: var(--product-info-margin-bottom);
+          margin-bottom: var(--product-info-margin-bottom, 16px);
         }
         
         .product-name {
-          font-size: var(--product-name-font-size);
-          font-weight: var(--product-name-font-weight);
-          color: var(--product-name-color);
+          font-size: var(--product-name-font-size, 1.2em);
+          font-weight: var(--product-name-font-weight, bold);
+          color: var(--product-name-color, inherit);
         }
         
         .selected-variant-info {
-          margin-top: var(--selected-variant-info-margin-top);
-          padding: var(--selected-variant-info-padding);
-          background: var(--selected-variant-info-background);
-          border-radius: var(--selected-variant-info-border-radius);
-          border: var(--selected-variant-info-border);
-          color: var(--selected-variant-info-color);
+          margin-top: var(--selected-variant-info-margin-top, 16px);
+          padding: var(--selected-variant-info-padding, 12px);
+          background: var(--selected-variant-info-background, #f5f5f5);
+          border-radius: var(--selected-variant-info-border-radius, 4px);
+          border: var(--selected-variant-info-border, none);
+          color: var(--selected-variant-info-color, inherit);
         }
         
         .error {
-          color: var(--error-color);
-          padding: var(--error-padding);
-          background: var(--error-background);
-          border: var(--error-border);
-          border-radius: var(--error-border-radius);
+          color: var(--error-color, red);
+          padding: var(--error-padding, 8px);
+          background: var(--error-background, transparent);
+          border: var(--error-border, none);
+          border-radius: var(--error-border-radius, 0);
         }
       </style>
     `;
