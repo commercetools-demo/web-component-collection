@@ -52,14 +52,17 @@ The `step-variant-selector` component accepts the following attributes:
 - `sku` (required): The SKU of the product to fetch. **Note: The component will not react to changes in this attribute after initial load. To use a different SKU, you must create a new instance of the component.**
 - `selectors` (required): A JSON array of strings representing the attribute names to use as selectors, in the order they should be displayed
 - `locale` (optional): The locale to use for product information, defaults to 'en-US'
+- `hideoneoption` (optional): When set to "true" or present without a value, automatically selects and hides selectors that have only one option, but only when all subsequent selectors also have only one option. Defaults to false.
 
 ### Behavior Notes
 
 1. **SKU Changes**: The component ignores changes to the `sku` attribute after it has been initialized. This is by design to prevent unexpected behavior when the product data changes. If you need to display a different product, you should create a new instance of the component.
 
-2. **Dynamic Updates**: While the `sku` attribute is fixed after initialization, other attributes like `selectors` and `locale` can be updated dynamically.
+2. **Dynamic Updates**: While the `sku` attribute is fixed after initialization, other attributes like `selectors`, `locale`, and `hideoneoption` can be updated dynamically.
 
 3. **Automatic Preselection**: When the component loads with a specific SKU, it automatically preselects all the buttons that correspond to the attributes of that SKU. This provides a better user experience by showing the complete selection for the current SKU without requiring user interaction.
+
+4. **Hide One Option Behavior**: When the `hideoneoption` attribute is enabled, the component will automatically select and hide any selector (at level 1 or beyond) that has only one option, but only if all subsequent selectors also have only one option. For example, if selector 3 has one option and selector 4 also has one option, both will be auto-selected and hidden if any option from selector 2 is selected. However, if selector 3 has one option but selector 4 has multiple options, no auto-selection or hiding will occur.
 
 ### Events
 
@@ -209,10 +212,19 @@ selector-button {
   }
 </style>
 
+<!-- Basic usage -->
 <step-variant-selector
   baseurl="https://api.example.com"
   sku="product-123"
   selectors='["size", "color", "material"]'>
+</step-variant-selector>
+
+<!-- With hideoneoption enabled -->
+<step-variant-selector
+  baseurl="https://api.example.com"
+  sku="product-456"
+  selectors='["size", "color", "material"]'
+  hideoneoption>
 </step-variant-selector>
 ```
 

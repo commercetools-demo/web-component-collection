@@ -45,6 +45,7 @@ class StepVariantSelector extends HTMLElement {
   private dataLoaded: boolean = false;
   private initialized: boolean = false;
   private dataIsLoading: boolean = false;
+  private hideOneOption: boolean = false;
 
   constructor() {
     super();
@@ -52,7 +53,7 @@ class StepVariantSelector extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ['baseurl', 'sku', 'selectors', 'locale'];
+    return ['baseurl', 'sku', 'selectors', 'locale', 'hideoneoption'];
   }
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
@@ -81,6 +82,9 @@ class StepVariantSelector extends HTMLElement {
           break;
         case 'locale':
           this.locale = newValue;
+          break;
+        case 'hideoneoption':
+          this.hideOneOption = newValue === 'true' || newValue === '';
           break;
       }
       
@@ -219,6 +223,38 @@ class StepVariantSelector extends HTMLElement {
     });
     
     return Array.from(values).map(v => JSON.parse(v));
+  }
+
+  // Check if all selectors from startIndex to the end have only one option
+  private allRemainingSelectorsHaveOneOption(validSelectors: string[], startIndex: number): boolean {
+    if (startIndex >= validSelectors.length) return false;
+    
+    for (let i = startIndex; i < validSelectors.length; i++) {
+      const selectorName = validSelectors[i];
+      const originalIndex = this.selectors.indexOf(selectorName);
+      const filteredVariants = this.getFilteredVariants(originalIndex);
+      const distinctValues = this.getDistinctAttributeValues(selectorName, filteredVariants);
+      
+      if (distinctValues.length !== 1) {
+        return false;
+      }
+    }
+    
+    return true;
+  }
+
+  // Auto-select the only option for all remaining selectors
+  private autoSelectRemainingSelectors(validSelectors: string[], startIndex: number): void {
+    for (let i = startIndex; i < validSelectors.length; i++) {
+      const selectorName = validSelectors[i];
+      const originalIndex = this.selectors.indexOf(selectorName);
+      const filteredVariants = this.getFilteredVariants(originalIndex);
+      const distinctValues = this.getDistinctAttributeValues(selectorName, filteredVariants);
+      
+      if (distinctValues.length === 1) {
+        this.selectedValues.set(selectorName, distinctValues[0]);
+      }
+    }
   }
 
   private getFilteredVariants(level: number): ProductVariant[] {
@@ -393,6 +429,7 @@ class StepVariantSelector extends HTMLElement {
         variant.attributes?.some(attr => attr.name === selectorName)
       );
     });
+    
     // Only loop through selectors that have values
     for (let i = 0; i < validSelectors.length; i++) {
       const selectorName = validSelectors[i];
@@ -405,6 +442,18 @@ class StepVariantSelector extends HTMLElement {
       
       // Check if previous selector in the valid selectors list has a value selected
       const isDisabled = i > 0 && !this.selectedValues.has(validSelectors[i - 1]);
+      
+      // If hideOneOption is enabled and this is level 1 or beyond, check if this and all remaining selectors have only one option
+      if (this.hideOneOption && i > 0) {
+        // If this selector has only one option and all remaining selectors have only one option
+        if (distinctValues.length === 1 && this.allRemainingSelectorsHaveOneOption(validSelectors, i)) {
+          // Auto-select all remaining selectors with their only option
+          this.autoSelectRemainingSelectors(validSelectors, i);
+          
+          // Skip rendering this and all remaining selectors
+          break;
+        }
+      }
       
       const options: SelectorOption[] = distinctValues.map(value => {
         return {
@@ -440,6 +489,34 @@ class StepVariantSelector extends HTMLElement {
         ${selectedVariantInfoHtml}
       </div>
     `;
+    
+    // If we auto-selected options, we need to dispatch events
+    if (selectedVariant && selectedVariant !== this.lastSelectedVariant) {
+      this.lastSelectedVariant = selectedVariant;
+      
+      // Dispatch variant-selection-changed event
+      this.dispatchEvent(new CustomEvent('variant-selection-changed', {
+        bubbles: true,
+        composed: true,
+        detail: {
+          selectedValues: Object.fromEntries(this.selectedValues),
+          selectedVariant
+        }
+      }));
+      
+      // Dispatch sku-selected event
+      if (selectedVariant.sku) {
+        this.dispatchEvent(new CustomEvent('sku-selected', {
+          bubbles: true,
+          composed: true,
+          detail: {
+            sku: selectedVariant.sku,
+            variant: selectedVariant,
+            product: this.product
+          }
+        }));
+      }
+    }
   }
 
   private renderError() {
