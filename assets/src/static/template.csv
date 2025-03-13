@@ -1,0 +1,6 @@
+firstName, lastName, streetNumber, streetName, city, state, zipCode, quantity
+John, Doe, 123, Main St, Anytown, CA, 90210, 2
+Jane, Smith, 456, Oak Ave, Somewhere, NY, 10001, 1
+Robert, Johnson, 789, Pine Blvd, Otherplace, TX, 75001, 3
+Emily, Williams, 321, Maple Dr, Newcity, FL, 33101, 1
+Michael, Brown, 654, Cedar Ln, Oldtown, WA, 98001, 2

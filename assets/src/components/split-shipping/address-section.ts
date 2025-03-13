@@ -9,11 +9,26 @@ interface AddressData {
   firstName?: string;
   lastName?: string;
   streetName?: string;
+  streetNumber?: string;
   postalCode?: string;
   city?: string;
+  state?: string;
   phone?: string;
   email?: string;
+  quantity?: number;
   [key: string]: any;
+}
+
+// Define CSV row data interface
+interface CsvRowData {
+  firstName: string;
+  lastName: string;
+  streetNumber: string;
+  streetName: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  quantity: number;
 }
 
 interface Account {
@@ -37,64 +52,114 @@ export default class SplitShippingAddressSection extends LitElement {
   cartItemId: string = '';
   locale: string = 'en-US';
   
-  private addresses: AddressData[] = [];
-  private selectedAddressId: string = '';
-  private newAddress: AddressData = {
-    country: '',
-    firstName: '',
-    lastName: '',
-    streetName: '',
-    postalCode: '',
-    city: '',
-    phone: '',
-    email: ''
-  };
-  private isAddingNewAddress: boolean = false;
+  private isDragging: boolean = false;
+  private csvData: CsvRowData[] = [];
+  private hasError: boolean = false;
+  private errorMessage: string = '';
+  private fileName: string = '';
 
   static styles = css`
     .address-section {
       font-family: sans-serif;
+      padding: 20px;
     }
     
-    .address-select {
-      width: 100%;
-      padding: 8px;
-      margin-bottom: 16px;
-      border: 1px solid #ccc;
+    .dropzone {
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      padding: 40px 20px;
+      text-align: center;
+      margin-bottom: 20px;
+      transition: all 0.3s ease;
+      background-color: #f9f9f9;
+      cursor: pointer;
+    }
+    
+    .dropzone.dragging {
+      border-color: #3f51b5;
+      background-color: rgba(63, 81, 181, 0.1);
+    }
+    
+    .dropzone-icon {
+      font-size: 48px;
+      color: #3f51b5;
+      margin-bottom: 10px;
+    }
+    
+    .dropzone-text {
+      margin-bottom: 15px;
+      font-size: 16px;
+      color: #555;
+    }
+    
+    .file-input {
+      display: none;
+    }
+    
+    .browse-button {
+      background-color: #3f51b5;
+      color: white;
+      border: none;
+      padding: 8px 16px;
       border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-top: 10px;
     }
     
-    .new-address-form {
-      margin-top: 16px;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
+    .browse-button:hover {
+      background-color: #303f9f;
     }
     
-    .form-field {
-      margin-bottom: 16px;
-    }
-    
-    .form-field.full-width {
-      grid-column: span 2;
-    }
-    
-    label {
+    .template-link {
       display: block;
-      margin-bottom: 4px;
-      font-weight: bold;
+      margin-top: 10px;
+      color: #3f51b5;
+      text-decoration: underline;
+      cursor: pointer;
       font-size: 14px;
     }
     
-    input, select {
-      width: 100%;
-      padding: 8px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
+    .template-link:hover {
+      color: #303f9f;
     }
     
-    .hidden {
-      display: none;
+    .file-info {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #666;
+    }
+    
+    .error-message {
+      color: #d32f2f;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+    
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .data-table th, .data-table td {
+      border: 1px solid #ddd;
+      padding: 8px 12px;
+      text-align: left;
+    }
+    
+    .data-table th {
+      background-color: #f2f2f2;
+      font-weight: bold;
+    }
+    
+    .data-table tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    
+    .data-table tr:hover {
+      background-color: #f5f5f5;
     }
     
     .button-container {
@@ -117,393 +182,305 @@ export default class SplitShippingAddressSection extends LitElement {
       background-color: #303f9f;
     }
     
-    .add-address-button {
-      background-color: transparent;
-      color: #3f51b5;
-      text-decoration: underline;
-      border: none;
-      padding: 0;
-      cursor: pointer;
-      font-size: 14px;
-      margin-bottom: 16px;
-    }
-    
-    .add-address-button:hover {
-      color: #303f9f;
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
     }
   `;
 
-  updated(changedProperties: Map<string, any>) {
-    if (changedProperties.has('cart') && this.cart) {
-      this.extractAddresses();
-    }
-    
-    if (changedProperties.has('account') && this.account) {
-      this.extractAccountAddresses();
+  constructor() {
+    super();
+    this.setupDragAndDropListeners();
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this.removeDragAndDropListeners();
+  }
+
+  private setupDragAndDropListeners() {
+    // These listeners will be properly attached in firstUpdated
+  }
+
+  private removeDragAndDropListeners() {
+    const dropzone = this.shadowRoot?.querySelector('.dropzone');
+    if (dropzone) {
+      dropzone.removeEventListener('dragover', this.handleDragOver as EventListener);
+      dropzone.removeEventListener('dragleave', this.handleDragLeave as EventListener);
+      dropzone.removeEventListener('drop', this.handleDrop as EventListener);
     }
   }
 
-  private extractAddresses() {
-    if (!this.cart) return;
-
-    // Extract shipping addresses from the cart
-    this.addresses = [];
+  firstUpdated() {
+    const dropzone = this.shadowRoot?.querySelector('.dropzone');
+    const fileInput = this.shadowRoot?.querySelector('.file-input');
     
-    // Add the main shipping address if it exists
-    if (this.cart.shippingAddress) {
-      this.addresses.push({
-        ...this.cart.shippingAddress,
-        id: 'main'
+    if (dropzone) {
+      dropzone.addEventListener('dragover', this.handleDragOver.bind(this) as EventListener);
+      dropzone.addEventListener('dragleave', this.handleDragLeave.bind(this) as EventListener);
+      dropzone.addEventListener('drop', this.handleDrop.bind(this) as EventListener);
+      dropzone.addEventListener('click', () => {
+        (fileInput as HTMLInputElement)?.click();
       });
     }
-    
-    // Add any shipping addresses from shipping info
-    if (this.cart.shippingInfo && this.cart.shippingInfo.deliveries && this.cart.shippingInfo.deliveries.length > 0) {
-      this.cart.shippingInfo.deliveries.forEach((delivery, index) => {
-        if (delivery.address) {
-          this.addresses.push({
-            ...delivery.address,
-            id: `delivery-${index}`
-          });
-        }
-      });
-    }
-    
-    // Add any custom shipping addresses
-    if (this.cart.itemShippingAddresses && this.cart.itemShippingAddresses.length > 0) {
-      this.cart.itemShippingAddresses.forEach((address, index) => {
-        this.addresses.push({
-          ...address,
-          id: `custom-${index}`
-        });
-      });
-    }
-    
-    // If there are addresses, select the first one by default
-    if (this.addresses.length > 0 && !this.selectedAddressId) {
-      this.selectedAddressId = this.addresses[0].id || '';
-    }
-    
-    this.requestUpdate();
   }
 
-  private extractAccountAddresses() {
-    if (!this.account || !this.account.addresses || this.account.addresses.length === 0) return;
-
-    // Add customer account addresses
-    this.account.addresses.forEach((address, index) => {
-      // Check if this address is already in the list (by comparing key fields)
-      const isDuplicate = this.addresses.some(addr => 
-        addr.country === address.country &&
-        addr.streetName === address.streetName &&
-        addr.postalCode === address.postalCode &&
-        addr.city === address.city
-      );
-
-      if (!isDuplicate) {
-        // Add a label to indicate if this is a default address
-        let label = '';
-        if (this.account?.defaultShippingAddressId === address.id) {
-          label = ' (Default Shipping)';
-        } else if (this.account?.defaultBillingAddressId === address.id) {
-          label = ' (Default Billing)';
-        }
-
-        this.addresses.push({
-          ...address,
-          id: `account-${address.id || index}`,
-          label
-        });
-      }
-    });
-
-    // If there are addresses but none selected yet, select the default shipping address if available
-    if (this.addresses.length > 0 && !this.selectedAddressId && this.account.defaultShippingAddressId) {
-      const defaultAddress = this.addresses.find(addr => 
-        addr.id === `account-${this.account?.defaultShippingAddressId}`
-      );
-      if (defaultAddress) {
-        this.selectedAddressId = defaultAddress.id || '';
-      } else {
-        this.selectedAddressId = this.addresses[0].id || '';
-      }
-    } else if (this.addresses.length > 0 && !this.selectedAddressId) {
-      this.selectedAddressId = this.addresses[0].id || '';
-    }
-    
-    this.requestUpdate();
-  }
-
-  private handleAddressChange(e: Event) {
-    const select = e.target as HTMLSelectElement;
-    this.selectedAddressId = select.value;
-    this.isAddingNewAddress = this.selectedAddressId === 'new';
-    this.requestUpdate();
-  }
-
-  private handleFormInput(e: Event) {
-    const target = e.target as HTMLInputElement | HTMLSelectElement;
-    const field = target.name as keyof AddressData;
-    this.newAddress = {
-      ...this.newAddress,
-      [field]: target.value
-    };
-  }
-
-  private async submitAddressForm(e: Event) {
+  private handleDragOver(e: DragEvent) {
     e.preventDefault();
+    e.stopPropagation();
+    this.isDragging = true;
+    this.requestUpdate();
+  }
+
+  private handleDragLeave(e: DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    this.isDragging = false;
+    this.requestUpdate();
+  }
+
+  private handleDrop(e: DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    this.isDragging = false;
     
-    try {
-      // Validate the form
-      if (!this.newAddress.country || !this.newAddress.firstName || !this.newAddress.lastName || 
-          !this.newAddress.streetName || !this.newAddress.postalCode || !this.newAddress.city) {
-        alert('Please fill in all required fields');
-        return;
-      }
-
-      // Add the new address to the list
-      const newAddressId = `new-${Date.now()}`;
-      this.addresses = [
-        ...this.addresses,
-        {
-          ...this.newAddress,
-          id: newAddressId
-        }
-      ];
-
-      // Select the new address
-      this.selectedAddressId = newAddressId;
-      this.isAddingNewAddress = false;
-      this.newAddress = {
-        country: '',
-        firstName: '',
-        lastName: '',
-        streetName: '',
-        postalCode: '',
-        city: '',
-        phone: '',
-        email: ''
-      };
-
-      this.requestUpdate();
-      
-      // Dispatch event to notify that a new address has been added
-      this.dispatchEvent(new CustomEvent('address-added', {
-        detail: {
-          cartItemId: this.cartItemId,
-          address: this.addresses.find(addr => addr.id === newAddressId)
-        },
-        bubbles: true,
-        composed: true
-      }));
-    } catch (error) {
-      console.error('Error adding new address:', error);
-      alert('Failed to add new address');
+    if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
+      this.processFile(e.dataTransfer.files[0]);
     }
   }
 
-  private async submitAddressSelection() {
-    if (!this.selectedAddressId || !this.cartItemId) {
-      alert('Please select an address');
+  private handleFileInput(e: Event) {
+    const input = e.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.processFile(input.files[0]);
+    }
+  }
+
+  private processFile(file: File) {
+    // Check if file is CSV
+    if (!file.name.endsWith('.csv')) {
+      this.hasError = true;
+      this.errorMessage = 'Please select a CSV file';
+      this.requestUpdate();
+      return;
+    }
+
+    this.fileName = file.name;
+    this.hasError = false;
+    this.errorMessage = '';
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const csvContent = e.target?.result as string;
+        this.parseCsvData(csvContent);
+      } catch (error) {
+        console.error('Error reading CSV file:', error);
+        this.hasError = true;
+        this.errorMessage = 'Failed to read CSV file';
+      }
+      this.requestUpdate();
+    };
+    
+    reader.onerror = () => {
+      this.hasError = true;
+      this.errorMessage = 'Failed to read file';
+      this.requestUpdate();
+    };
+    
+    reader.readAsText(file);
+  }
+
+  private parseCsvData(csvContent: string) {
+    try {
+      // Split by lines and remove empty lines
+      const lines = csvContent.split(/\r?\n/).filter(line => line.trim() !== '');
+      
+      if (lines.length < 2) {
+        throw new Error('CSV file must contain at least a header row and one data row');
+      }
+      
+      // Get headers and validate required columns
+      const headers = lines[0].split(',').map(header => header.trim());
+      const requiredColumns = ['firstName', 'lastName', 'streetNumber', 'streetName', 'city', 'state', 'zipCode', 'quantity'];
+      
+      const missingColumns = requiredColumns.filter(col => !headers.includes(col));
+      if (missingColumns.length > 0) {
+        throw new Error(`Missing required columns: ${missingColumns.join(', ')}`);
+      }
+      
+      // Parse data rows
+      this.csvData = [];
+      for (let i = 1; i < lines.length; i++) {
+        const values = this.parseCSVLine(lines[i]);
+        
+        if (values.length !== headers.length) {
+          console.warn(`Skipping row ${i + 1}: column count mismatch`);
+          continue;
+        }
+        
+        const rowData: any = {};
+        headers.forEach((header, index) => {
+          rowData[header] = values[index];
+        });
+        
+        // Convert quantity to number
+        rowData.quantity = parseInt(rowData.quantity, 10) || 1;
+        
+        this.csvData.push(rowData as CsvRowData);
+      }
+      
+      if (this.csvData.length === 0) {
+        throw new Error('No valid data rows found in CSV file');
+      }
+      
+    } catch (error) {
+      console.error('Error parsing CSV data:', error);
+      this.hasError = true;
+      this.errorMessage = error instanceof Error ? error.message : 'Failed to parse CSV data';
+      this.csvData = [];
+    }
+  }
+
+  // Helper function to properly parse CSV lines with quoted values
+  private parseCSVLine(line: string): string[] {
+    const result: string[] = [];
+    let current = '';
+    let inQuotes = false;
+    
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      
+      if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === ',' && !inQuotes) {
+        result.push(current.trim());
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    
+    // Add the last field
+    result.push(current.trim());
+    return result;
+  }
+
+  private submitAddressData() {
+    if (this.csvData.length === 0 || !this.cartItemId) {
+      alert('Please upload a valid CSV file first');
       return;
     }
 
     try {
-      // Find the selected address
-      const selectedAddress = this.addresses.find(addr => addr.id === this.selectedAddressId);
-      if (!selectedAddress) {
-        throw new Error('Selected address not found');
-      }
+      // Convert CSV data to address data format
+      const addresses: AddressData[] = this.csvData.map((row, index) => ({
+        id: `csv-${index}`,
+        country: 'US', // Default to US since we have state
+        firstName: row.firstName,
+        lastName: row.lastName,
+        streetName: row.streetName,
+        streetNumber: row.streetNumber,
+        city: row.city,
+        state: row.state,
+        postalCode: row.zipCode,
+        quantity: row.quantity
+      }));
 
-      // Dispatch event to notify that an address has been selected
-      this.dispatchEvent(new CustomEvent('address-selected', {
+      // Dispatch event to notify that addresses have been selected
+      this.dispatchEvent(new CustomEvent('addresses-selected', {
         detail: {
           cartItemId: this.cartItemId,
-          address: selectedAddress
+          addresses: addresses
         },
         bubbles: true,
         composed: true
       }));
 
       // Show success message
-      alert('Address selected successfully');
+      alert('Address data submitted successfully');
     } catch (error) {
-      console.error('Error submitting address selection:', error);
-      alert('Failed to select address');
+      console.error('Error submitting address data:', error);
+      alert('Failed to submit address data');
     }
-  }
-
-  private getAddressDisplayName(address: AddressData): string {
-    if (!address) return '';
-    
-    const parts = [];
-    
-    if (address.firstName && address.lastName) {
-      parts.push(`${address.firstName} ${address.lastName}`);
-    }
-    
-    if (address.streetName) {
-      parts.push(address.streetName);
-    }
-    
-    if (address.city && address.postalCode) {
-      parts.push(`${address.city}, ${address.postalCode}`);
-    } else if (address.city) {
-      parts.push(address.city);
-    }
-    
-    if (address.country) {
-      parts.push(address.country);
-    }
-    
-    if (address.label) {
-      parts.push(address.label);
-    }
-    
-    return parts.join(' - ');
   }
 
   render() {
     return html`
       <div class="address-section">
-        <h4>Select a shipping address</h4>
+        <h4>Upload Shipping Addresses</h4>
         
-        <select 
-          id="address-select" 
-          class="address-select"
-          @change=${this.handleAddressChange}
-        >
-          ${this.addresses.map(address => html`
-            <option 
-              value=${address.id} 
-              ?selected=${address.id === this.selectedAddressId}
-            >
-              ${this.getAddressDisplayName(address)}
-            </option>
-          `)}
-          <option value="new" ?selected=${this.selectedAddressId === 'new'}>Add a new address</option>
-        </select>
-        
-        <form 
-          id="new-address-form" 
-          class=${classMap({ 'new-address-form': true, 'hidden': !this.isAddingNewAddress })}
-          @submit=${this.submitAddressForm}
-        >
-          <div class="form-field">
-            <label for="firstName">First Name *</label>
-            <input 
-              type="text" 
-              id="firstName" 
-              name="firstName" 
-              required 
-              .value=${this.newAddress.firstName || ''}
-              @input=${this.handleFormInput}
-            />
+        <div class="dropzone ${this.isDragging ? 'dragging' : ''}">
+          <div class="dropzone-icon">📁</div>
+          <div class="dropzone-text">
+            Drag & drop your CSV file here or click to browse
           </div>
-          
-          <div class="form-field">
-            <label for="lastName">Last Name *</label>
-            <input 
-              type="text" 
-              id="lastName" 
-              name="lastName" 
-              required 
-              .value=${this.newAddress.lastName || ''}
-              @input=${this.handleFormInput}
-            />
+          <div class="dropzone-text">
+            <small>Accepted format: .csv with columns for firstName, lastName, streetNumber, streetName, city, state, zipCode, quantity</small>
           </div>
-          
-          <div class="form-field full-width">
-            <label for="streetName">Street Address *</label>
-            <input 
-              type="text" 
-              id="streetName" 
-              name="streetName" 
-              required 
-              .value=${this.newAddress.streetName || ''}
-              @input=${this.handleFormInput}
-            />
-          </div>
-          
-          <div class="form-field">
-            <label for="city">City *</label>
-            <input 
-              type="text" 
-              id="city" 
-              name="city" 
-              required 
-              .value=${this.newAddress.city || ''}
-              @input=${this.handleFormInput}
-            />
-          </div>
-          
-          <div class="form-field">
-            <label for="postalCode">Postal Code *</label>
-            <input 
-              type="text" 
-              id="postalCode" 
-              name="postalCode" 
-              required 
-              .value=${this.newAddress.postalCode || ''}
-              @input=${this.handleFormInput}
-            />
-          </div>
-          
-          <div class="form-field">
-            <label for="country">Country *</label>
-            <select 
-              id="country" 
-              name="country" 
-              required 
-              .value=${this.newAddress.country || ''}
-              @change=${this.handleFormInput}
-            >
-              <option value="">Select a country</option>
-              <option value="US">United States</option>
-              <option value="CA">Canada</option>
-              <option value="GB">United Kingdom</option>
-              <option value="DE">Germany</option>
-              <option value="FR">France</option>
-              <!-- Add more countries as needed -->
-            </select>
-          </div>
-          
-          <div class="form-field">
-            <label for="phone">Phone</label>
-            <input 
-              type="tel" 
-              id="phone" 
-              name="phone" 
-              .value=${this.newAddress.phone || ''}
-              @input=${this.handleFormInput}
-            />
-          </div>
-          
-          <div class="form-field">
-            <label for="email">Email</label>
-            <input 
-              type="email" 
-              id="email" 
-              name="email" 
-              .value=${this.newAddress.email || ''}
-              @input=${this.handleFormInput}
-            />
-          </div>
-          
-          <div class="form-field full-width button-container">
-            <button type="submit">Add Address</button>
-          </div>
-        </form>
-        
-        <div class="button-container">
-          <button 
-            id="address-submit"
-            ?disabled=${!this.selectedAddressId || this.selectedAddressId === 'new'}
-            @click=${this.submitAddressSelection}
-          >
-            Continue with Selected Address
-          </button>
+          <input 
+            type="file" 
+            class="file-input" 
+            accept=".csv" 
+            @change=${this.handleFileInput}
+          />
+          <button class="browse-button">Browse Files</button>
         </div>
+        
+        <a href="/src/static/template.csv" download class="template-link">Download Template</a>
+        
+        ${this.fileName ? html`
+          <div class="file-info">
+            Selected file: ${this.fileName}
+          </div>
+        ` : ''}
+        
+        ${this.hasError ? html`
+          <div class="error-message">
+            ${this.errorMessage}
+          </div>
+        ` : ''}
+        
+        ${this.csvData.length > 0 ? html`
+          <h4>Parsed Address Data</h4>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Street Number</th>
+                <th>Street Name</th>
+                <th>City</th>
+                <th>State</th>
+                <th>Zip Code</th>
+                <th>Quantity</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${this.csvData.map(row => html`
+                <tr>
+                  <td>${row.firstName}</td>
+                  <td>${row.lastName}</td>
+                  <td>${row.streetNumber}</td>
+                  <td>${row.streetName}</td>
+                  <td>${row.city}</td>
+                  <td>${row.state}</td>
+                  <td>${row.zipCode}</td>
+                  <td>${row.quantity}</td>
+                </tr>
+              `)}
+            </tbody>
+          </table>
+          
+          <div class="button-container">
+            <button 
+              id="address-submit"
+              @click=${this.submitAddressData}
+            >
+              Continue with Uploaded Addresses
+            </button>
+          </div>
+        ` : ''}
       </div>
     `;
   }
