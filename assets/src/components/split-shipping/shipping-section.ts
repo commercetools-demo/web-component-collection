@@ -1,20 +1,7 @@
 import type { Cart, LineItem } from '@commercetools/platform-sdk';
 import { LitElement, html, css } from 'lit';
-
-interface Address {
-  id: string;
-  firstName?: string;
-  lastName?: string;
-  streetName?: string;
-  streetNumber?: string;
-  city?: string;
-  state?: string;
-  postalCode?: string;
-  country: string;
-  quantity: number;
-  comment: string;
-  isNew?: boolean;
-}
+import { ShippingAddress } from './shipping-address-item';
+import './shipping-address-item';
 
 export default class SplitShippingShippingSection extends LitElement {
   static properties = {
@@ -27,13 +14,12 @@ export default class SplitShippingShippingSection extends LitElement {
   cart: Cart | null = null;
   cartItemId: string = '';
   locale: string = 'en-US';
-  addresses: Address[] = [];
+  addresses: ShippingAddress[] = [];
   
   private currentLineItem: LineItem | null = null;
   private isLoading: boolean = false;
   private errorMessage: string = '';
-  private existingAddresses: Address[] = [];
-  private newAddresses: Address[] = [];
+  private itemShippingAddresses: ShippingAddress[] = [];
 
   static styles = css`
     .shipping-section {
@@ -57,46 +43,6 @@ export default class SplitShippingShippingSection extends LitElement {
       font-weight: bold;
       margin: 16px 0 8px;
       color: #555;
-    }
-    
-    .address-item {
-      border: 1px solid #eee;
-      border-radius: 4px;
-      padding: 16px;
-      margin-bottom: 12px;
-      display: flex;
-      align-items: center;
-    }
-    
-    .address-details {
-      flex: 1;
-    }
-    
-    .address-line {
-      margin-bottom: 4px;
-    }
-    
-    .quantity-control {
-      display: flex;
-      align-items: center;
-      margin-left: 16px;
-    }
-    
-    .quantity-input {
-      width: 60px;
-      padding: 8px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      text-align: center;
-      margin: 0 8px;
-    }
-    
-    .comment-input {
-      width: 100%;
-      padding: 8px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      margin-top: 8px;
     }
     
     .loading {
@@ -166,29 +112,21 @@ export default class SplitShippingShippingSection extends LitElement {
         throw new Error(`Line item with ID ${this.cartItemId} not found in cart`);
       }
 
-      // Split addresses into existing and new
-      this.existingAddresses = (this.addresses || [])
-        .filter(address => !address.isNew)
+      console.log('Resetting item shipping addresses');
+
+      // Map cart.itemShippingAddresses to our ShippingAddress type
+      this.itemShippingAddresses = (this.cart.itemShippingAddresses || [])
         .map(address => ({
           ...address,
-          quantity: address.quantity || 0,
-          comment: address.comment || ''
-        }));
-      
-      this.newAddresses = (this.addresses || [])
-        .filter(address => address.isNew)
-        .map(address => ({
-          ...address,
-          quantity: address.quantity || 0,
-          comment: address.comment || ''
+          id: address.id || '', // Ensure id is always a string
+          country: address.country, // Required by our interface
+          quantity: 0, // Default quantity
+          comment: '' // Default comment
         }));
 
-      // If no addresses yet, initialize with empty arrays
-      if (this.addresses.length === 0) {
-        // In a real implementation, you would fetch existing addresses from the account
-        // For this example, we'll leave it empty
-        this.existingAddresses = [];
-        this.newAddresses = [];
+      // If no addresses yet, initialize with empty array
+      if (this.itemShippingAddresses.length === 0) {
+        this.itemShippingAddresses = [];
       }
     } catch (error) {
       console.error('Error loading line item and addresses:', error);
@@ -199,36 +137,32 @@ export default class SplitShippingShippingSection extends LitElement {
     }
   }
 
-  private handleQuantityChange(e: Event, addressId: string, isNew: boolean = false) {
-    const target = e.target as HTMLInputElement;
-    const newQuantity = parseInt(target.value, 10) || 0;
+  private handleQuantityChanged(e: CustomEvent) {
+    const { addressId, quantity, address } = e.detail;
     
-    const addressList = isNew ? this.newAddresses : this.existingAddresses;
-    const address = addressList.find(addr => addr.id === addressId);
+    // Find and update the address in our array
+    const index = this.itemShippingAddresses.findIndex(addr => addr.id === addressId);
     
-    if (address) {
-      address.quantity = newQuantity;
+    if (index !== -1) {
+      this.itemShippingAddresses[index].quantity = quantity;
       this.requestUpdate();
     }
   }
 
-  private handleCommentChange(e: Event, addressId: string, isNew: boolean = false) {
-    const target = e.target as HTMLInputElement;
-    const newComment = target.value;
+  private handleCommentChanged(e: CustomEvent) {
+    const { addressId, comment } = e.detail;
     
-    const addressList = isNew ? this.newAddresses : this.existingAddresses;
-    const address = addressList.find(addr => addr.id === addressId);
+    // Find and update the address in our array
+    const index = this.itemShippingAddresses.findIndex(addr => addr.id === addressId);
     
-    if (address) {
-      address.comment = newComment;
+    if (index !== -1) {
+      this.itemShippingAddresses[index].comment = comment;
       this.requestUpdate();
     }
   }
 
   private getTotalAllocatedQuantity(): number {
-    const existingTotal = this.existingAddresses.reduce((sum, addr) => sum + (addr.quantity || 0), 0);
-    const newTotal = this.newAddresses.reduce((sum, addr) => sum + (addr.quantity || 0), 0);
-    return existingTotal + newTotal;
+    return this.itemShippingAddresses.reduce((sum, addr) => sum + (addr.quantity || 0), 0);
   }
 
   private isQuantityValid(): boolean {
@@ -244,11 +178,8 @@ export default class SplitShippingShippingSection extends LitElement {
     }
 
     try {
-      // Combine all addresses with their quantities
-      const allocatedAddresses = [
-        ...this.existingAddresses.filter(addr => addr.quantity > 0),
-        ...this.newAddresses.filter(addr => addr.quantity > 0)
-      ];
+      // Get all addresses with their quantities
+      const allocatedAddresses = this.itemShippingAddresses.filter(addr => addr.quantity > 0);
 
       // Dispatch event to notify that addresses have been allocated
       this.dispatchEvent(new CustomEvent('shipping-allocation-submitted', {
@@ -266,21 +197,6 @@ export default class SplitShippingShippingSection extends LitElement {
       console.error('Error submitting shipping allocation:', error);
       alert('Failed to submit shipping allocation');
     }
-  }
-
-  private formatAddress(address: Address): string {
-    const parts = [
-      address.firstName,
-      address.lastName,
-      address.streetNumber,
-      address.streetName,
-      address.city,
-      address.state,
-      address.postalCode,
-      address.country
-    ].filter(Boolean);
-    
-    return parts.join(', ');
   }
 
   render() {
@@ -302,73 +218,20 @@ export default class SplitShippingShippingSection extends LitElement {
                 }
                 
                 <div class="address-list">
-                  ${this.existingAddresses.length > 0 ? 
+                  ${this.itemShippingAddresses.length > 0 ? 
                     html`
-                      <h4 class="address-section-title">Existing Addresses</h4>
-                      ${this.existingAddresses.map(address => html`
-                        <div class="address-item">
-                          <div class="address-details">
-                            <div class="address-line">${this.formatAddress(address)}</div>
-                            <input 
-                              type="text" 
-                              class="comment-input" 
-                              placeholder="Add a comment (optional)"
-                              .value=${address.comment || ''}
-                              @input=${(e: Event) => this.handleCommentChange(e, address.id)}
-                            />
-                          </div>
-                          <div class="quantity-control">
-                            <label>Quantity:</label>
-                            <input 
-                              type="number" 
-                              min="0" 
-                              max=${this.currentLineItem?.quantity || 0} 
-                              class="quantity-input"
-                              .value=${address.quantity.toString()}
-                              @input=${(e: Event) => this.handleQuantityChange(e, address.id)}
-                            />
-                          </div>
-                        </div>
+                      <h4 class="address-section-title">Shipping Addresses</h4>
+                      ${this.itemShippingAddresses.map(address => html`
+                        <shipping-address-item
+                          .address=${address}
+                          .maxQuantity=${this.currentLineItem?.quantity || 0}
+                          .locale=${this.locale}
+                          @quantity-changed=${this.handleQuantityChanged}
+                          @comment-changed=${this.handleCommentChanged}
+                        ></shipping-address-item>
                       `)}
                     ` : 
-                    ''
-                  }
-                  
-                  ${this.newAddresses.length > 0 ? 
-                    html`
-                      <h4 class="address-section-title">New Addresses</h4>
-                      ${this.newAddresses.map(address => html`
-                        <div class="address-item">
-                          <div class="address-details">
-                            <div class="address-line">${this.formatAddress(address)}</div>
-                            <input 
-                              type="text" 
-                              class="comment-input" 
-                              placeholder="Add a comment (optional)"
-                              .value=${address.comment || ''}
-                              @input=${(e: Event) => this.handleCommentChange(e, address.id, true)}
-                            />
-                          </div>
-                          <div class="quantity-control">
-                            <label>Quantity:</label>
-                            <input 
-                              type="number" 
-                              min="0" 
-                              max=${this.currentLineItem?.quantity || 0} 
-                              class="quantity-input"
-                              .value=${address.quantity.toString()}
-                              @input=${(e: Event) => this.handleQuantityChange(e, address.id, true)}
-                            />
-                          </div>
-                        </div>
-                      `)}
-                    ` : 
-                    ''
-                  }
-                  
-                  ${this.existingAddresses.length === 0 && this.newAddresses.length === 0 ? 
-                    html`<p>No addresses available. Please add addresses in the address section first.</p>` : 
-                    ''
+                    html`<p>No shipping addresses available. Please add addresses in the address section first.</p>`
                   }
                 </div>
                 
