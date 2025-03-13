@@ -10,6 +10,7 @@ A web component for managing split shipping functionality in a commercetools-bas
 - Collapsible sections for easy navigation
 - Custom styling via CSS variables
 - Event-based communication
+- Integration with customer account addresses
 
 ## Usage
 
@@ -20,6 +21,7 @@ A web component for managing split shipping functionality in a commercetools-bas
   locale="en-US"
   cart-id="cart-123"
   cart-item-id="line-item-456"
+  account-id="customer-789"
 >
   Split Shipping
 </split-shipping>
@@ -30,6 +32,7 @@ A web component for managing split shipping functionality in a commercetools-bas
   locale="en-US"
   cart-id="cart-123"
   cart-item-id="line-item-456"
+  account-id="customer-789"
 >
   <span>Custom Button Text</span>
   <img src="shipping-icon.svg" alt="Shipping Icon">
@@ -44,6 +47,7 @@ A web component for managing split shipping functionality in a commercetools-bas
 | locale        | String | Locale for internationalization (default: en-US) | No       |
 | cart-id       | String | ID of the cart to modify                         | Yes      |
 | cart-item-id  | String | ID of the cart item to modify                    | Yes      |
+| account-id    | String | ID of the customer account to fetch addresses    | No       |
 
 ## Events
 

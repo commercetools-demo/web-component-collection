@@ -5,11 +5,12 @@ class SplitShipping extends HTMLElement {
   private locale: string = 'en-US';
   private cartId: string = '';
   private cartItemId: string = '';
+  private accountId: string = '';
   private cart: Cart | null = null;
   private modal: HTMLElement | null = null;
 
   static get observedAttributes() {
-    return ['base-url', 'locale', 'cart-id', 'cart-item-id'];
+    return ['base-url', 'locale', 'cart-id', 'cart-item-id', 'account-id'];
   }
 
   constructor() {
@@ -38,6 +39,9 @@ class SplitShipping extends HTMLElement {
       case 'cart-item-id':
         this.cartItemId = newValue;
         break;
+      case 'account-id':
+        this.accountId = newValue;
+        break;
     }
   }
 
@@ -48,15 +52,25 @@ class SplitShipping extends HTMLElement {
 
   private async openModal() {
     try {
-      await this.fetchCartData();
+      // Fetch both cart and account data in parallel
+      const [cartData, accountData] = await Promise.all([
+        this.fetchCartData(),
+        this.fetchAccountData()
+      ]);
       
       // Create modal if it doesn't exist
       if (!this.modal && this.shadowRoot) {
         this.modal = document.createElement('split-shipping-modal');
         this.modal.setAttribute('locale', this.locale);
+        
         if (this.cart) {
           this.modal.setAttribute('cart', JSON.stringify(this.cart));
         }
+        
+        if (accountData) {
+          this.modal.setAttribute('account', JSON.stringify(accountData));
+        }
+        
         this.modal.setAttribute('cart-item-id', this.cartItemId);
         this.shadowRoot.appendChild(this.modal);
       }
@@ -83,10 +97,29 @@ class SplitShipping extends HTMLElement {
           throw new Error(`Failed to fetch cart: ${response.statusText}`);
         }
         this.cart = await response.json();
+        return this.cart;
       }
+      return null;
     } catch (error) {
       console.error('Error fetching cart data:', error);
       throw error;
+    }
+  }
+
+  private async fetchAccountData() {
+    if (!this.accountId || !this.baseUrl) {
+      return null;
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/account/${this.accountId}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch account: ${response.statusText}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching account data:', error);
+      return null;
     }
   }
 

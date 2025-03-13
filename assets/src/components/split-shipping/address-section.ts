@@ -14,8 +14,17 @@ interface AddressData {
   [key: string]: any;
 }
 
+interface Account {
+  id: string;
+  addresses?: AddressData[];
+  defaultShippingAddressId?: string;
+  defaultBillingAddressId?: string;
+  [key: string]: any;
+}
+
 class SplitShippingAddressSection extends HTMLElement {
   private cart: Cart | null = null;
+  private account: Account | null = null;
   private cartItemId: string = '';
   private locale: string = 'en-US';
   private addresses: AddressData[] = [];
@@ -33,7 +42,7 @@ class SplitShippingAddressSection extends HTMLElement {
   private isAddingNewAddress: boolean = false;
 
   static get observedAttributes() {
-    return ['cart', 'cart-item-id', 'locale'];
+    return ['cart', 'cart-item-id', 'locale', 'account'];
   }
 
   constructor() {
@@ -58,6 +67,16 @@ class SplitShippingAddressSection extends HTMLElement {
           }
         } catch (e) {
           console.error('Invalid cart JSON:', e);
+        }
+        break;
+      case 'account':
+        try {
+          this.account = JSON.parse(newValue);
+          if (this.account) {
+            this.extractAccountAddresses();
+          }
+        } catch (e) {
+          console.error('Invalid account JSON:', e);
         }
         break;
       case 'cart-item-id':
@@ -109,6 +128,51 @@ class SplitShippingAddressSection extends HTMLElement {
     
     // If there are addresses, select the first one by default
     if (this.addresses.length > 0 && !this.selectedAddressId) {
+      this.selectedAddressId = this.addresses[0].id || '';
+    }
+  }
+
+  private extractAccountAddresses() {
+    if (!this.account || !this.account.addresses || this.account.addresses.length === 0) return;
+
+    // Add customer account addresses
+    this.account.addresses.forEach((address, index) => {
+      // Check if this address is already in the list (by comparing key fields)
+      const isDuplicate = this.addresses.some(addr => 
+        addr.country === address.country &&
+        addr.streetName === address.streetName &&
+        addr.postalCode === address.postalCode &&
+        addr.city === address.city
+      );
+
+      if (!isDuplicate) {
+        // Add a label to indicate if this is a default address
+        let label = '';
+        if (this.account?.defaultShippingAddressId === address.id) {
+          label = ' (Default Shipping)';
+        } else if (this.account?.defaultBillingAddressId === address.id) {
+          label = ' (Default Billing)';
+        }
+
+        this.addresses.push({
+          ...address,
+          id: `account-${address.id || index}`,
+          label
+        });
+      }
+    });
+
+    // If there are addresses but none selected yet, select the default shipping address if available
+    if (this.addresses.length > 0 && !this.selectedAddressId && this.account.defaultShippingAddressId) {
+      const defaultAddress = this.addresses.find(addr => 
+        addr.id === `account-${this.account?.defaultShippingAddressId}`
+      );
+      if (defaultAddress) {
+        this.selectedAddressId = defaultAddress.id || '';
+      } else {
+        this.selectedAddressId = this.addresses[0].id || '';
+      }
+    } else if (this.addresses.length > 0 && !this.selectedAddressId) {
       this.selectedAddressId = this.addresses[0].id || '';
     }
   }
@@ -195,7 +259,7 @@ class SplitShippingAddressSection extends HTMLElement {
   }
 
   private async submitAddressSelection() {
-    if (!this.selectedAddressId || !this.cart || !this.cartItemId) {
+    if (!this.selectedAddressId || !this.cartItemId) {
       alert('Please select an address');
       return;
     }
@@ -208,7 +272,7 @@ class SplitShippingAddressSection extends HTMLElement {
       }
 
       // Prepare the address data (remove the id field which is not part of the commercetools Address type)
-      const { id, ...addressData } = selectedAddress;
+      const { id, label, ...addressData } = selectedAddress;
 
       // Dispatch event to notify that an address has been selected
       this.dispatchEvent(new CustomEvent('address-selected', {
@@ -226,6 +290,26 @@ class SplitShippingAddressSection extends HTMLElement {
       console.error('Error submitting address selection:', error);
       alert('Failed to select address');
     }
+  }
+
+  private getAddressDisplayName(address: AddressData): string {
+    const parts = [
+      address.firstName || '',
+      address.lastName || '',
+      address.streetName || '',
+      address.city || '',
+      address.postalCode || '',
+      address.country || ''
+    ].filter(Boolean);
+    
+    let displayName = parts.join(', ');
+    
+    // Add label if present (e.g., "Default Shipping")
+    if (address.label) {
+      displayName += address.label;
+    }
+    
+    return displayName;
   }
 
   private render() {
@@ -305,7 +389,7 @@ class SplitShippingAddressSection extends HTMLElement {
           <select id="address-select">
             ${this.addresses.map(address => `
               <option value="${address.id}" ${this.selectedAddressId === address.id ? 'selected' : ''}>
-                ${address.firstName || ''} ${address.lastName || ''}, ${address.streetName || ''}, ${address.city || ''}, ${address.postalCode || ''}, ${address.country || ''}
+                ${this.getAddressDisplayName(address)}
               </option>
             `).join('')}
             <option value="new" ${this.isAddingNewAddress ? 'selected' : ''}>Add New Address</option>

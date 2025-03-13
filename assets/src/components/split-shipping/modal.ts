@@ -1,7 +1,14 @@
 import type { Cart } from '@commercetools/platform-sdk';
 
+interface Account {
+  id: string;
+  addresses?: any[];
+  [key: string]: any;
+}
+
 class SplitShippingModal extends HTMLElement {
   private cart: Cart | null = null;
+  private account: Account | null = null;
   private cartItemId: string = '';
   private locale: string = 'en-US';
   private isOpen: boolean = false;
@@ -9,7 +16,7 @@ class SplitShippingModal extends HTMLElement {
   private shippingSectionExpanded: boolean = true;
 
   static get observedAttributes() {
-    return ['cart', 'cart-item-id', 'locale'];
+    return ['cart', 'cart-item-id', 'locale', 'account'];
   }
 
   constructor() {
@@ -31,6 +38,13 @@ class SplitShippingModal extends HTMLElement {
           this.cart = JSON.parse(newValue);
         } catch (e) {
           console.error('Invalid cart JSON:', e);
+        }
+        break;
+      case 'account':
+        try {
+          this.account = JSON.parse(newValue);
+        } catch (e) {
+          console.error('Invalid account JSON:', e);
         }
         break;
       case 'cart-item-id':
@@ -201,6 +215,7 @@ class SplitShippingModal extends HTMLElement {
                   cart-item-id="${this.cartItemId}"
                   locale="${this.locale}"
                   ${this.cart ? `cart='${JSON.stringify(this.cart).replace(/'/g, '&apos;')}'` : ''}
+                  ${this.account ? `account='${JSON.stringify(this.account).replace(/'/g, '&apos;')}'` : ''}
                 ></split-shipping-address-section>
               </div>
             </div>
