@@ -16,6 +16,21 @@ A web component that displays a list of prices for a specific product SKU from c
 </product-prices>
 ```
 
+If your site has Stores (example: b2b), do this instead
+```html
+<product-prices
+  baseurl="https://your-api-url"
+  sku="your-product-sku"
+  storekey="store key"
+  productid="product id"
+  price-currency="EUR"
+  price-country="DE"
+  store-key="your-store-key"
+  locale="en">
+</product-prices>
+```
+
+
 ## Attributes
 
 | Attribute | Description | Required |
@@ -25,6 +40,9 @@ A web component that displays a list of prices for a specific product SKU from c
 | `price-currency` | Currency code for price filtering | No |
 | `price-country` | Country code for price filtering | No |
 | `locale` | Locale for channel name display (e.g., "en-US", "es-MX") | Yes |
+| `storekey` | Key of the current store | No |
+| `productid` | Product ID | Yes if using store key. |
+
 
 ## API Endpoint
 

@@ -18,25 +18,31 @@ interface Price {
 }
 
 interface ProductVariant {
+  sku?: string;
   prices?: Price[];
 }
 
 interface ProductProjection {
   masterVariant?: ProductVariant;
+  variants?: ProductVariant[];
 }
 
 class ProductPrices extends HTMLElement {
   private baseUrl: string = '';
   private sku: string = '';
+  private productId: string = '';
   private priceCurrency: string = '';
   private priceCountry: string = '';
+  private storeKey: string = '';
   private locale: string = '';
   private shadow: ShadowRoot;
   private dataLoaded: boolean = false;
 
+
   constructor() {
     super();
     this.shadow = this.attachShadow({ mode: 'open' });
+    console.log("hello");
   }
 
   connectedCallback() {
@@ -46,7 +52,7 @@ class ProductPrices extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ['baseurl', 'sku', 'price-currency', 'price-country', 'locale'];
+    return ['baseurl', 'sku', 'productid', 'price-currency', 'price-country', 'storekey', 'locale'];
   }
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
@@ -60,12 +66,20 @@ class ProductPrices extends HTMLElement {
           this.sku = newValue;
           this.dataLoaded = false;
           break;
+        case 'productid':
+          this.productId = newValue;
+          this.dataLoaded = false;
+          break;
         case 'price-currency':
           this.priceCurrency = newValue;
           this.dataLoaded = false;
           break;
         case 'price-country':
           this.priceCountry = newValue;
+          this.dataLoaded = false;
+          break;
+        case 'storekey':
+          this.storeKey = newValue;
           this.dataLoaded = false;
           break;
         case 'locale':
@@ -77,30 +91,48 @@ class ProductPrices extends HTMLElement {
   }
 
   private async fetchAndRenderPrices() {
-    if (!this.baseUrl || !this.sku) return;
+    console.log("fetching prices", this)
+    if (!this.baseUrl || !this.sku ) return;
+
+    // If getting product in store, we need a store key, sku, and product id
+    if(this.storeKey && !(this.sku && this.productId)) return;
 
     try {
-      const url = new URL(`${this.baseUrl}/products/sku/${this.sku}`);
-      if (this.priceCountry) url.searchParams.append('priceCountry', this.priceCountry);
-      if (this.priceCurrency) url.searchParams.append('priceCurrency', this.priceCurrency);
-
+      let url;
+      if(this.storeKey) {
+        url = new URL(`${this.baseUrl}/product-in-store/${this.storeKey}/${this.productId}`);
+      } else {
+        url = new URL(`${this.baseUrl}/products/sku/${this.sku}`);
+        if (this.priceCountry) url.searchParams.append('priceCountry', this.priceCountry);
+        if (this.priceCurrency) url.searchParams.append('priceCurrency', this.priceCurrency);
+      }
+      console.log(url);
       const response = await fetch(url.toString());
       if (!response.ok) throw new Error('Failed to fetch product data');
 
       const data = await response.json();
       this.dataLoaded = true;
-      this.renderPrices(data);
+      this.renderPrices(data, this.sku);
     } catch (error) {
       console.error('Error fetching product prices:', error);
       this.renderError();
     }
   }
 
-  private renderPrices(productProjection: ProductProjection) {
-    let prices = productProjection.masterVariant?.prices || [];
+  private renderPrices(productProjection: ProductProjection, sku: string) {
+    let variant = productProjection.masterVariant;
+    if(variant?.sku !== sku) {
+      variant = productProjection.variants?.find(v => v.sku === sku);
+    }
+    let prices = variant?.prices || [];
       // Filter prices by currency if priceCurrency is defined
       if (this.priceCurrency) {
         prices = prices.filter(price => price.value.currencyCode === this.priceCurrency);
+      }
+
+      // Filter out the "no channel" price if store is set
+      if(this.storeKey) {
+        prices = prices.filter(price => price.channel);
       }
     
     const styles = `

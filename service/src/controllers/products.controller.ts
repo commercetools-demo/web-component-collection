@@ -1,12 +1,33 @@
 import { Request, Response } from 'express';
-import { searchProducts, getProductTypeById } from '../services/products';
+import { searchProducts, getProductTypeById, getProductInStore } from '../services/products';
 import { logger } from '../utils/logger.utils';
 const EXPANDS = [
     'masterVariant.prices[*].channel',
           'variants.prices[*].channel',
 ];
 
+export const getProductInStoreController = async (req: Request, res: Response) => {
+  try {
+    const { storeKey, id } = req.params;
+    
+    if (!storeKey || !id) {
+      return res.status(400).json({ error: 'Store Key and Product ID are required' });
+    }
+
+    const product = await getProductInStore(storeKey, id);
+    return res.json(product);
+  } catch (error) {
+    console.error('Controller error fetching product in store:', error);
+    return res.status(404).json({ 
+      error: error instanceof Error ? error.message : 'Product not found'
+    });
+  }
+};
+
+
+
 export const getProductByIdController = async (req: Request, res: Response) => {
+  console.log("getProductByIdController");
   try {
     const { id } = req.params;
     
