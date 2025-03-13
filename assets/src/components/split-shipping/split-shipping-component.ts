@@ -7,7 +7,8 @@ export default class SplitShipping extends LitElement {
     locale: { type: String },
     cartId: { type: String, attribute: 'cart-id' },
     cartItemId: { type: String, attribute: 'cart-item-id' },
-    accountId: { type: String, attribute: 'account-id' }
+    accountId: { type: String, attribute: 'account-id' },
+    isOpen: { type: Boolean, state: true }
   };
 
   baseUrl: string = '';
@@ -15,9 +16,10 @@ export default class SplitShipping extends LitElement {
   cartId: string = '';
   cartItemId: string = '';
   accountId: string = '';
+  isOpen: boolean = false;
   
   private cart: Cart | null = null;
-  private modal: HTMLElement | null = null;
+  private accountData: any = null;
 
   static styles = css`
     .split-shipping-button {
@@ -39,15 +41,6 @@ export default class SplitShipping extends LitElement {
     }
   `;
 
-  connectedCallback() {
-    super.connectedCallback();
-    this.setupEventListeners();
-  }
-
-  private setupEventListeners() {
-    this.addEventListener('click', () => this.openModal());
-  }
-
   private async openModal() {
     try {
       // Fetch both cart and account data in parallel
@@ -56,30 +49,16 @@ export default class SplitShipping extends LitElement {
         this.fetchAccountData()
       ]);
       
-      // Create modal if it doesn't exist
-      if (!this.modal) {
-        this.modal = document.createElement('split-shipping-modal');
-        this.modal.setAttribute('locale', this.locale);
-        
-        if (this.cart) {
-          this.modal.setAttribute('cart', JSON.stringify(this.cart));
-        }
-        
-        if (accountData) {
-          this.modal.setAttribute('account', JSON.stringify(accountData));
-        }
-        
-        this.modal.setAttribute('cart-item-id', this.cartItemId);
-        this.renderRoot.appendChild(this.modal);
-      }
-      
-      // Show modal
-      if (this.modal) {
-        (this.modal as any).open();
-      }
+      this.accountData = accountData;
+      // Open the modal
+      this.isOpen = true;
     } catch (error) {
       console.error('Error opening split shipping modal:', error);
     }
+  }
+
+  private closeModal() {
+    this.isOpen = false;
   }
 
   private async fetchCartData() {
@@ -123,9 +102,19 @@ export default class SplitShipping extends LitElement {
 
   render() {
     return html`
-      <button class="split-shipping-button">
+      <button class="split-shipping-button" @click=${this.openModal}>
         <slot>Split Shipping</slot>
       </button>
+      
+      ${this.isOpen ? html`
+        <split-shipping-modal
+          .locale=${this.locale}
+          .cart=${this.cart}
+          .account=${this.accountData}
+          .cartItemId=${this.cartItemId}
+          @close=${this.closeModal}
+        ></split-shipping-modal>
+      ` : ''}
     `;
   }
 }

@@ -14,14 +14,12 @@ export default class SplitShippingModal extends LitElement {
     account: { type: Object },
     cartItemId: { type: String, attribute: 'cart-item-id' },
     locale: { type: String },
-    isOpen: { type: Boolean, state: true }
   };
 
   cart: Cart | null = null;
   account: Account | null = null;
   cartItemId: string = '';
   locale: string = 'en-US';
-  isOpen: boolean = false;
   
   private addressSectionExpanded: boolean = true;
   private shippingSectionExpanded: boolean = true;
@@ -114,14 +112,22 @@ export default class SplitShippingModal extends LitElement {
     }
   `;
 
-  open() {
-    this.isOpen = true;
+  connectedCallback() {
+    super.connectedCallback();
     document.body.style.overflow = 'hidden'; // Prevent scrolling when modal is open
   }
 
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    document.body.style.overflow = ''; // Restore scrolling when modal is removed
+  }
+
   close() {
-    this.isOpen = false;
-    document.body.style.overflow = ''; // Restore scrolling
+    // Dispatch a close event that will be caught by the parent component
+    this.dispatchEvent(new CustomEvent('close', {
+      bubbles: true,
+      composed: true
+    }));
   }
 
   private toggleAddressSection() {
@@ -142,10 +148,6 @@ export default class SplitShippingModal extends LitElement {
   }
 
   render() {
-    if (!this.isOpen) {
-      return html``;
-    }
-
     return html`
       <div class="modal-backdrop" @click=${this.handleBackdropClick}>
         <div class="modal-content">
@@ -164,8 +166,8 @@ export default class SplitShippingModal extends LitElement {
                 <split-shipping-address-section 
                   .cart=${this.cart}
                   .account=${this.account}
-                  cart-item-id=${this.cartItemId}
-                  locale=${this.locale}
+                  .cartItemId=${this.cartItemId}
+                  .locale=${this.locale}
                 ></split-shipping-address-section>
               </div>
             </div>
@@ -178,8 +180,8 @@ export default class SplitShippingModal extends LitElement {
               <div class=${classMap({ 'section-content': true, 'hidden': !this.shippingSectionExpanded })}>
                 <split-shipping-shipping-section 
                   .cart=${this.cart}
-                  cart-item-id=${this.cartItemId}
-                  locale=${this.locale}
+                  .cartItemId=${this.cartItemId}
+                  .locale=${this.locale}
                 ></split-shipping-shipping-section>
               </div>
             </div>
