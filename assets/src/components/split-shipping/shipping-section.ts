@@ -1,80 +1,102 @@
-import type { Cart } from '@commercetools/platform-sdk';
+import type { Cart, LineItem } from '@commercetools/platform-sdk';
 import { LitElement, html, css } from 'lit';
 
-interface ShippingMethod {
+interface Address {
   id: string;
-  name: string;
-  description?: string;
-  price: {
-    amount: number;
-    currencyCode: string;
-  };
+  firstName?: string;
+  lastName?: string;
+  streetName?: string;
+  streetNumber?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country: string;
+  quantity: number;
+  comment: string;
+  isNew?: boolean;
 }
 
 export default class SplitShippingShippingSection extends LitElement {
   static properties = {
     cart: { type: Object },
     cartItemId: { type: String, attribute: 'cart-item-id' },
-    locale: { type: String }
+    locale: { type: String },
+    addresses: { type: Array }
   };
 
   cart: Cart | null = null;
   cartItemId: string = '';
   locale: string = 'en-US';
+  addresses: Address[] = [];
   
-  private shippingMethods: ShippingMethod[] = [];
-  private selectedShippingMethodId: string = '';
+  private currentLineItem: LineItem | null = null;
   private isLoading: boolean = false;
+  private errorMessage: string = '';
+  private existingAddresses: Address[] = [];
+  private newAddresses: Address[] = [];
 
   static styles = css`
     .shipping-section {
       font-family: sans-serif;
+      padding: 20px;
     }
     
-    .shipping-methods {
+    .section-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 16px;
+      color: #333;
+    }
+    
+    .address-list {
       margin-bottom: 24px;
     }
     
-    .shipping-method {
+    .address-section-title {
+      font-size: 16px;
+      font-weight: bold;
+      margin: 16px 0 8px;
+      color: #555;
+    }
+    
+    .address-item {
       border: 1px solid #eee;
       border-radius: 4px;
       padding: 16px;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
       display: flex;
       align-items: center;
-      cursor: pointer;
     }
     
-    .shipping-method:hover {
-      background-color: #f9f9f9;
-    }
-    
-    .shipping-method.selected {
-      border-color: #3f51b5;
-      background-color: rgba(63, 81, 181, 0.05);
-    }
-    
-    .shipping-method-radio {
-      margin-right: 16px;
-    }
-    
-    .shipping-method-details {
+    .address-details {
       flex: 1;
     }
     
-    .shipping-method-name {
-      font-weight: bold;
+    .address-line {
       margin-bottom: 4px;
     }
     
-    .shipping-method-description {
-      color: #666;
-      font-size: 14px;
+    .quantity-control {
+      display: flex;
+      align-items: center;
+      margin-left: 16px;
     }
     
-    .shipping-method-price {
-      font-weight: bold;
-      color: #333;
+    .quantity-input {
+      width: 60px;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      text-align: center;
+      margin: 0 8px;
+    }
+    
+    .comment-input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin-top: 8px;
     }
     
     .loading {
@@ -83,6 +105,14 @@ export default class SplitShippingShippingSection extends LitElement {
       align-items: center;
       padding: 24px;
       color: #666;
+    }
+    
+    .error-message {
+      color: #d32f2f;
+      margin: 16px 0;
+      padding: 8px;
+      background-color: rgba(211, 47, 47, 0.1);
+      border-radius: 4px;
     }
     
     button {
@@ -99,6 +129,11 @@ export default class SplitShippingShippingSection extends LitElement {
       background-color: #303f9f;
     }
     
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    
     .button-container {
       margin-top: 24px;
       display: flex;
@@ -108,152 +143,262 @@ export default class SplitShippingShippingSection extends LitElement {
 
   connectedCallback() {
     super.connectedCallback();
-    this.fetchShippingMethods();
+    this.loadLineItemAndAddresses();
   }
 
   updated(changedProperties: Map<string, any>) {
-    if (changedProperties.has('cart') || changedProperties.has('cartItemId')) {
-      this.fetchShippingMethods();
+    if (changedProperties.has('cart') || changedProperties.has('cartItemId') || changedProperties.has('addresses')) {
+      this.loadLineItemAndAddresses();
     }
   }
 
-  private async fetchShippingMethods() {
-    if (!this.cart) return;
+  private loadLineItemAndAddresses() {
+    if (!this.cart || !this.cartItemId) return;
 
     this.isLoading = true;
     this.requestUpdate();
 
     try {
-      // In a real implementation, you would fetch shipping methods from the API
-      // For this example, we'll create some mock data
-      // In a real implementation, you might use:
-      // const response = await makeCtRequest('/shipping-methods');
+      // Find the current line item
+      this.currentLineItem = this.cart.lineItems.find(item => item.id === this.cartItemId) || null;
       
-      // Mock data for demonstration
-      this.shippingMethods = [
-        {
-          id: 'standard',
-          name: 'Standard Shipping',
-          description: '3-5 business days',
-          price: {
-            amount: 5.99,
-            currencyCode: this.cart.totalPrice?.currencyCode || 'USD'
-          }
-        },
-        {
-          id: 'express',
-          name: 'Express Shipping',
-          description: '1-2 business days',
-          price: {
-            amount: 12.99,
-            currencyCode: this.cart.totalPrice?.currencyCode || 'USD'
-          }
-        },
-        {
-          id: 'overnight',
-          name: 'Overnight Shipping',
-          description: 'Next business day',
-          price: {
-            amount: 19.99,
-            currencyCode: this.cart.totalPrice?.currencyCode || 'USD'
-          }
-        }
-      ];
+      if (!this.currentLineItem) {
+        throw new Error(`Line item with ID ${this.cartItemId} not found in cart`);
+      }
 
-      // Select the first shipping method by default
-      if (this.shippingMethods.length > 0 && !this.selectedShippingMethodId) {
-        this.selectedShippingMethodId = this.shippingMethods[0].id;
+      // Split addresses into existing and new
+      this.existingAddresses = (this.addresses || [])
+        .filter(address => !address.isNew)
+        .map(address => ({
+          ...address,
+          quantity: address.quantity || 0,
+          comment: address.comment || ''
+        }));
+      
+      this.newAddresses = (this.addresses || [])
+        .filter(address => address.isNew)
+        .map(address => ({
+          ...address,
+          quantity: address.quantity || 0,
+          comment: address.comment || ''
+        }));
+
+      // If no addresses yet, initialize with empty arrays
+      if (this.addresses.length === 0) {
+        // In a real implementation, you would fetch existing addresses from the account
+        // For this example, we'll leave it empty
+        this.existingAddresses = [];
+        this.newAddresses = [];
       }
     } catch (error) {
-      console.error('Error fetching shipping methods:', error);
+      console.error('Error loading line item and addresses:', error);
+      this.errorMessage = error instanceof Error ? error.message : 'Failed to load data';
     } finally {
       this.isLoading = false;
       this.requestUpdate();
     }
   }
 
-  private handleShippingMethodChange(e: Event) {
+  private handleQuantityChange(e: Event, addressId: string, isNew: boolean = false) {
     const target = e.target as HTMLInputElement;
-    this.selectedShippingMethodId = target.value;
+    const newQuantity = parseInt(target.value, 10) || 0;
+    
+    const addressList = isNew ? this.newAddresses : this.existingAddresses;
+    const address = addressList.find(addr => addr.id === addressId);
+    
+    if (address) {
+      address.quantity = newQuantity;
+      this.requestUpdate();
+    }
   }
 
-  private async submitShippingSelection() {
-    if (!this.selectedShippingMethodId || !this.cart || !this.cartItemId) {
-      alert('Please select a shipping method');
+  private handleCommentChange(e: Event, addressId: string, isNew: boolean = false) {
+    const target = e.target as HTMLInputElement;
+    const newComment = target.value;
+    
+    const addressList = isNew ? this.newAddresses : this.existingAddresses;
+    const address = addressList.find(addr => addr.id === addressId);
+    
+    if (address) {
+      address.comment = newComment;
+      this.requestUpdate();
+    }
+  }
+
+  private getTotalAllocatedQuantity(): number {
+    const existingTotal = this.existingAddresses.reduce((sum, addr) => sum + (addr.quantity || 0), 0);
+    const newTotal = this.newAddresses.reduce((sum, addr) => sum + (addr.quantity || 0), 0);
+    return existingTotal + newTotal;
+  }
+
+  private isQuantityValid(): boolean {
+    if (!this.currentLineItem) return false;
+    
+    const totalAllocated = this.getTotalAllocatedQuantity();
+    return totalAllocated > 0 && totalAllocated === this.currentLineItem.quantity;
+  }
+
+  private async submitShippingAllocation() {
+    if (!this.isQuantityValid() || !this.currentLineItem || !this.cartItemId) {
       return;
     }
 
     try {
-      // Find the selected shipping method
-      const selectedMethod = this.shippingMethods.find(method => method.id === this.selectedShippingMethodId);
-      if (!selectedMethod) {
-        throw new Error('Selected shipping method not found');
-      }
+      // Combine all addresses with their quantities
+      const allocatedAddresses = [
+        ...this.existingAddresses.filter(addr => addr.quantity > 0),
+        ...this.newAddresses.filter(addr => addr.quantity > 0)
+      ];
 
-      // Dispatch event to notify that a shipping method has been selected
-      this.dispatchEvent(new CustomEvent('shipping-method-selected', {
+      // Dispatch event to notify that addresses have been allocated
+      this.dispatchEvent(new CustomEvent('shipping-allocation-submitted', {
         detail: {
           cartItemId: this.cartItemId,
-          shippingMethodId: this.selectedShippingMethodId
+          addresses: allocatedAddresses
         },
         bubbles: true,
         composed: true
       }));
 
       // Show success message
-      alert('Shipping method selected successfully');
+      alert('Shipping allocation submitted successfully');
     } catch (error) {
-      console.error('Error submitting shipping method selection:', error);
-      alert('Failed to select shipping method');
+      console.error('Error submitting shipping allocation:', error);
+      alert('Failed to submit shipping allocation');
     }
+  }
+
+  private formatAddress(address: Address): string {
+    const parts = [
+      address.firstName,
+      address.lastName,
+      address.streetNumber,
+      address.streetName,
+      address.city,
+      address.state,
+      address.postalCode,
+      address.country
+    ].filter(Boolean);
+    
+    return parts.join(', ');
   }
 
   render() {
     return html`
       <div class="shipping-section">
-        <h4>Select a shipping method</h4>
-        
         ${this.isLoading ? 
-          html`<div class="loading">Loading shipping methods...</div>` : 
+          html`<div class="loading">Loading data...</div>` : 
           html`
-            <div class="shipping-methods">
-              ${this.shippingMethods.map(method => html`
-                <label 
-                  class="shipping-method ${method.id === this.selectedShippingMethodId ? 'selected' : ''}"
-                  for="shipping-method-${method.id}"
-                >
-                  <input 
-                    type="radio" 
-                    name="shipping-method" 
-                    id="shipping-method-${method.id}" 
-                    value="${method.id}" 
-                    class="shipping-method-radio"
-                    ?checked=${method.id === this.selectedShippingMethodId}
-                    @change=${this.handleShippingMethodChange}
-                  />
-                  <div class="shipping-method-details">
-                    <div class="shipping-method-name">${method.name}</div>
-                    ${method.description ? 
-                      html`<div class="shipping-method-description">${method.description}</div>` : 
+            ${this.currentLineItem ? 
+              html`
+                <h3 class="section-title">
+                  Split shipping of "${this.currentLineItem.name[this.locale] || this.currentLineItem.name['en-US'] || 'Item'}" 
+                  into different shipping addresses
+                </h3>
+                
+                ${this.errorMessage ? 
+                  html`<div class="error-message">${this.errorMessage}</div>` : 
+                  ''
+                }
+                
+                <div class="address-list">
+                  ${this.existingAddresses.length > 0 ? 
+                    html`
+                      <h4 class="address-section-title">Existing Addresses</h4>
+                      ${this.existingAddresses.map(address => html`
+                        <div class="address-item">
+                          <div class="address-details">
+                            <div class="address-line">${this.formatAddress(address)}</div>
+                            <input 
+                              type="text" 
+                              class="comment-input" 
+                              placeholder="Add a comment (optional)"
+                              .value=${address.comment || ''}
+                              @input=${(e: Event) => this.handleCommentChange(e, address.id)}
+                            />
+                          </div>
+                          <div class="quantity-control">
+                            <label>Quantity:</label>
+                            <input 
+                              type="number" 
+                              min="0" 
+                              max=${this.currentLineItem?.quantity || 0} 
+                              class="quantity-input"
+                              .value=${address.quantity.toString()}
+                              @input=${(e: Event) => this.handleQuantityChange(e, address.id)}
+                            />
+                          </div>
+                        </div>
+                      `)}
+                    ` : 
+                    ''
+                  }
+                  
+                  ${this.newAddresses.length > 0 ? 
+                    html`
+                      <h4 class="address-section-title">New Addresses</h4>
+                      ${this.newAddresses.map(address => html`
+                        <div class="address-item">
+                          <div class="address-details">
+                            <div class="address-line">${this.formatAddress(address)}</div>
+                            <input 
+                              type="text" 
+                              class="comment-input" 
+                              placeholder="Add a comment (optional)"
+                              .value=${address.comment || ''}
+                              @input=${(e: Event) => this.handleCommentChange(e, address.id, true)}
+                            />
+                          </div>
+                          <div class="quantity-control">
+                            <label>Quantity:</label>
+                            <input 
+                              type="number" 
+                              min="0" 
+                              max=${this.currentLineItem?.quantity || 0} 
+                              class="quantity-input"
+                              .value=${address.quantity.toString()}
+                              @input=${(e: Event) => this.handleQuantityChange(e, address.id, true)}
+                            />
+                          </div>
+                        </div>
+                      `)}
+                    ` : 
+                    ''
+                  }
+                  
+                  ${this.existingAddresses.length === 0 && this.newAddresses.length === 0 ? 
+                    html`<p>No addresses available. Please add addresses in the address section first.</p>` : 
+                    ''
+                  }
+                </div>
+                
+                <div class="quantity-summary">
+                  <p>
+                    Total allocated: ${this.getTotalAllocatedQuantity()} of ${this.currentLineItem.quantity}
+                    ${!this.isQuantityValid() ? 
+                      html`<span class="error-message">
+                        ${this.getTotalAllocatedQuantity() > this.currentLineItem.quantity ? 
+                          'Total allocated quantity exceeds available quantity' : 
+                          'Total allocated quantity must equal available quantity'
+                        }
+                      </span>` : 
                       ''
                     }
-                  </div>
-                  <div class="shipping-method-price">
-                    ${method.price.amount.toFixed(2)} ${method.price.currencyCode}
-                  </div>
-                </label>
-              `)}
-            </div>
-            
-            <div class="button-container">
-              <button 
-                id="shipping-submit"
-                ?disabled=${!this.selectedShippingMethodId}
-                @click=${this.submitShippingSelection}
-              >
-                Continue with Selected Shipping
-              </button>
-            </div>
+                  </p>
+                </div>
+                
+                <div class="button-container">
+                  <button 
+                    id="shipping-submit"
+                    ?disabled=${!this.isQuantityValid()}
+                    @click=${this.submitShippingAllocation}
+                  >
+                    Continue with Selected Allocation
+                  </button>
+                </div>
+              ` : 
+              html`<p>Line item not found in cart</p>`
+            }
           `
         }
       </div>
