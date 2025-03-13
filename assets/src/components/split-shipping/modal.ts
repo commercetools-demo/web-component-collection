@@ -147,6 +147,11 @@ export default class SplitShippingModal extends LitElement {
     }
   }
 
+  private handleAddressesSelected(event: CustomEvent) {
+    this.dispatchEvent(event);
+    this.toggleAddressSection();
+  }
+
   render() {
     return html`
       <div class="modal-backdrop" @click=${this.handleBackdropClick}>
@@ -168,6 +173,7 @@ export default class SplitShippingModal extends LitElement {
                   .account=${this.account}
                   .cartItemId=${this.cartItemId}
                   .locale=${this.locale}
+                  @addresses-selected=${this.handleAddressesSelected}
                 ></split-shipping-address-section>
               </div>
             </div>

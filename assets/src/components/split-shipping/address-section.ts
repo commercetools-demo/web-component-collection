@@ -28,6 +28,7 @@ interface CsvRowData {
   city: string;
   state: string;
   zipCode: string;
+  country: string;
   quantity: number;
 }
 
@@ -302,7 +303,7 @@ export default class SplitShippingAddressSection extends LitElement {
       
       // Get headers and validate required columns
       const headers = lines[0].split(',').map(header => header.trim());
-      const requiredColumns = ['firstName', 'lastName', 'streetNumber', 'streetName', 'city', 'state', 'zipCode', 'quantity'];
+      const requiredColumns = ['firstName', 'lastName', 'streetNumber', 'streetName', 'city', 'state', 'zipCode', 'country', 'quantity'];
       
       const missingColumns = requiredColumns.filter(col => !headers.includes(col));
       if (missingColumns.length > 0) {
@@ -368,15 +369,17 @@ export default class SplitShippingAddressSection extends LitElement {
 
   private submitAddressData() {
     if (this.csvData.length === 0 || !this.cartItemId) {
-      alert('Please upload a valid CSV file first');
+      // display error
+      this.hasError = true;
+      this.errorMessage = 'Please upload a valid CSV file first';
       return;
     }
 
     try {
       // Convert CSV data to address data format
       const addresses: AddressData[] = this.csvData.map((row, index) => ({
-        id: `csv-${index}`,
-        country: 'US', // Default to US since we have state
+        key: `csv-${row.firstName}-${row.lastName}`,
+        country: row.country,
         firstName: row.firstName,
         lastName: row.lastName,
         streetName: row.streetName,
@@ -398,10 +401,8 @@ export default class SplitShippingAddressSection extends LitElement {
       }));
 
       // Show success message
-      alert('Address data submitted successfully');
     } catch (error) {
       console.error('Error submitting address data:', error);
-      alert('Failed to submit address data');
     }
   }
 
@@ -416,7 +417,7 @@ export default class SplitShippingAddressSection extends LitElement {
             Drag & drop your CSV file here or click to browse
           </div>
           <div class="dropzone-text">
-            <small>Accepted format: .csv with columns for firstName, lastName, streetNumber, streetName, city, state, zipCode, quantity</small>
+            <small>Accepted format: .csv with columns for firstName, lastName, streetNumber, streetName, city, state, zipCode, country, quantity</small>
           </div>
           <input 
             type="file" 
@@ -477,7 +478,7 @@ export default class SplitShippingAddressSection extends LitElement {
               id="address-submit"
               @click=${this.submitAddressData}
             >
-              Continue with Uploaded Addresses
+              Add addresses to your cart
             </button>
           </div>
         ` : ''}

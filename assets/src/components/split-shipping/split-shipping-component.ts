@@ -100,6 +100,47 @@ export default class SplitShipping extends LitElement {
     }
   }
 
+  private async handleAddressesSelected(event: CustomEvent) {
+    if (!this.baseUrl || !this.cartId || !this.cartItemId) {
+      console.error('Missing required parameters for updating item shipping address');
+      return;
+    }
+
+    try {
+      const addresses = event.detail.addresses;
+      
+      if (!addresses || !Array.isArray(addresses)) {
+        console.error('Invalid addresses data received', event.detail);
+        return;
+      }
+
+
+      const response = await fetch(`${this.baseUrl}/carts/${this.cartId}/add-item-shipping-addresses`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          cartItemId: this.cartItemId,
+          addresses: addresses
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to update item shipping address: ${response.statusText}`);
+      }
+
+      // Update the cart with the new data
+      const updatedCart = await response.json();
+      this.cart = updatedCart;
+
+    } catch (error) {
+      console.error('Error updating item shipping address:', error);
+    }
+  }
+
+
+
   render() {
     return html`
       <button class="split-shipping-button" @click=${this.openModal}>
@@ -113,6 +154,7 @@ export default class SplitShipping extends LitElement {
           .account=${this.accountData}
           .cartItemId=${this.cartItemId}
           @close=${this.closeModal}
+          @addresses-selected=${this.handleAddressesSelected}
         ></split-shipping-modal>
       ` : ''}
     `;
