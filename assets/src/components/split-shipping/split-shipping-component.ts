@@ -1,53 +1,51 @@
 import type { Cart } from '@commercetools/platform-sdk';
+import { LitElement, html, css } from 'lit';
 
-class SplitShipping extends HTMLElement {
-  private baseUrl: string = '';
-  private locale: string = 'en-US';
-  private cartId: string = '';
-  private cartItemId: string = '';
-  private accountId: string = '';
+export default class SplitShipping extends LitElement {
+  static properties = {
+    baseUrl: { type: String, attribute: 'base-url' },
+    locale: { type: String },
+    cartId: { type: String, attribute: 'cart-id' },
+    cartItemId: { type: String, attribute: 'cart-item-id' },
+    accountId: { type: String, attribute: 'account-id' }
+  };
+
+  baseUrl: string = '';
+  locale: string = 'en-US';
+  cartId: string = '';
+  cartItemId: string = '';
+  accountId: string = '';
+  
   private cart: Cart | null = null;
   private modal: HTMLElement | null = null;
 
-  static get observedAttributes() {
-    return ['base-url', 'locale', 'cart-id', 'cart-item-id', 'account-id'];
-  }
-
-  constructor() {
-    super();
-    this.attachShadow({ mode: 'open' });
-  }
+  static styles = css`
+    .split-shipping-button {
+      background-color: #3f51b5;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: sans-serif;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .split-shipping-button:hover {
+      background-color: #303f9f;
+    }
+  `;
 
   connectedCallback() {
-    this.render();
+    super.connectedCallback();
     this.setupEventListeners();
   }
 
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    if (oldValue === newValue) return;
-
-    switch (name) {
-      case 'base-url':
-        this.baseUrl = newValue;
-        break;
-      case 'locale':
-        this.locale = newValue;
-        break;
-      case 'cart-id':
-        this.cartId = newValue;
-        break;
-      case 'cart-item-id':
-        this.cartItemId = newValue;
-        break;
-      case 'account-id':
-        this.accountId = newValue;
-        break;
-    }
-  }
-
   private setupEventListeners() {
-    const button = this.shadowRoot?.querySelector('.split-shipping-button');
-    button?.addEventListener('click', () => this.openModal());
+    this.addEventListener('click', () => this.openModal());
   }
 
   private async openModal() {
@@ -59,7 +57,7 @@ class SplitShipping extends HTMLElement {
       ]);
       
       // Create modal if it doesn't exist
-      if (!this.modal && this.shadowRoot) {
+      if (!this.modal) {
         this.modal = document.createElement('split-shipping-modal');
         this.modal.setAttribute('locale', this.locale);
         
@@ -72,7 +70,7 @@ class SplitShipping extends HTMLElement {
         }
         
         this.modal.setAttribute('cart-item-id', this.cartItemId);
-        this.shadowRoot.appendChild(this.modal);
+        this.renderRoot.appendChild(this.modal);
       }
       
       // Show modal
@@ -123,30 +121,8 @@ class SplitShipping extends HTMLElement {
     }
   }
 
-  private render() {
-    if (!this.shadowRoot) return;
-
-    this.shadowRoot.innerHTML = `
-      <style>
-        .split-shipping-button {
-          background-color: #3f51b5;
-          color: white;
-          border: none;
-          padding: 8px 16px;
-          border-radius: 4px;
-          cursor: pointer;
-          font-family: sans-serif;
-          font-size: 14px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        
-        .split-shipping-button:hover {
-          background-color: #303f9f;
-        }
-      </style>
-      
+  render() {
+    return html`
       <button class="split-shipping-button">
         <slot>Split Shipping</slot>
       </button>
@@ -154,6 +130,4 @@ class SplitShipping extends HTMLElement {
   }
 }
 
-customElements.define('split-shipping', SplitShipping);
-
-export default SplitShipping; 
+customElements.define('split-shipping', SplitShipping); 

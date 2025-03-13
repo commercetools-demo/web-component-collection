@@ -1,4 +1,6 @@
 import type { Cart } from '@commercetools/platform-sdk';
+import { LitElement, html, css } from 'lit';
+import { classMap } from 'lit/directives/class-map.js';
 
 // Define our own Address interface to avoid read-only properties
 interface AddressData {
@@ -22,11 +24,19 @@ interface Account {
   [key: string]: any;
 }
 
-class SplitShippingAddressSection extends HTMLElement {
-  private cart: Cart | null = null;
-  private account: Account | null = null;
-  private cartItemId: string = '';
-  private locale: string = 'en-US';
+export default class SplitShippingAddressSection extends LitElement {
+  static properties = {
+    cart: { type: Object },
+    account: { type: Object },
+    cartItemId: { type: String, attribute: 'cart-item-id' },
+    locale: { type: String }
+  };
+
+  cart: Cart | null = null;
+  account: Account | null = null;
+  cartItemId: string = '';
+  locale: string = 'en-US';
+  
   private addresses: AddressData[] = [];
   private selectedAddressId: string = '';
   private newAddress: AddressData = {
@@ -41,53 +51,96 @@ class SplitShippingAddressSection extends HTMLElement {
   };
   private isAddingNewAddress: boolean = false;
 
-  static get observedAttributes() {
-    return ['cart', 'cart-item-id', 'locale', 'account'];
-  }
-
-  constructor() {
-    super();
-    this.attachShadow({ mode: 'open' });
-  }
-
-  connectedCallback() {
-    this.render();
-    this.setupEventListeners();
-  }
-
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    if (oldValue === newValue) return;
-
-    switch (name) {
-      case 'cart':
-        try {
-          this.cart = JSON.parse(newValue);
-          if (this.cart) {
-            this.extractAddresses();
-          }
-        } catch (e) {
-          console.error('Invalid cart JSON:', e);
-        }
-        break;
-      case 'account':
-        try {
-          this.account = JSON.parse(newValue);
-          if (this.account) {
-            this.extractAccountAddresses();
-          }
-        } catch (e) {
-          console.error('Invalid account JSON:', e);
-        }
-        break;
-      case 'cart-item-id':
-        this.cartItemId = newValue;
-        break;
-      case 'locale':
-        this.locale = newValue;
-        break;
+  static styles = css`
+    .address-section {
+      font-family: sans-serif;
     }
+    
+    .address-select {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    
+    .new-address-form {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    
+    .form-field {
+      margin-bottom: 16px;
+    }
+    
+    .form-field.full-width {
+      grid-column: span 2;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 4px;
+      font-weight: bold;
+      font-size: 14px;
+    }
+    
+    input, select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    
+    .hidden {
+      display: none;
+    }
+    
+    .button-container {
+      margin-top: 24px;
+      display: flex;
+      justify-content: flex-end;
+    }
+    
+    button {
+      background-color: #3f51b5;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    
+    button:hover {
+      background-color: #303f9f;
+    }
+    
+    .add-address-button {
+      background-color: transparent;
+      color: #3f51b5;
+      text-decoration: underline;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+    
+    .add-address-button:hover {
+      color: #303f9f;
+    }
+  `;
 
-    this.render();
+  updated(changedProperties: Map<string, any>) {
+    if (changedProperties.has('cart') && this.cart) {
+      this.extractAddresses();
+    }
+    
+    if (changedProperties.has('account') && this.account) {
+      this.extractAccountAddresses();
+    }
   }
 
   private extractAddresses() {
@@ -130,6 +183,8 @@ class SplitShippingAddressSection extends HTMLElement {
     if (this.addresses.length > 0 && !this.selectedAddressId) {
       this.selectedAddressId = this.addresses[0].id || '';
     }
+    
+    this.requestUpdate();
   }
 
   private extractAccountAddresses() {
@@ -175,45 +230,29 @@ class SplitShippingAddressSection extends HTMLElement {
     } else if (this.addresses.length > 0 && !this.selectedAddressId) {
       this.selectedAddressId = this.addresses[0].id || '';
     }
+    
+    this.requestUpdate();
   }
 
-  private setupEventListeners() {
-    if (!this.shadowRoot) return;
-
-    // Handle address selection
-    const addressSelect = this.shadowRoot.querySelector('#address-select');
-    addressSelect?.addEventListener('change', (e) => {
-      const select = e.target as HTMLSelectElement;
-      this.selectedAddressId = select.value;
-      this.isAddingNewAddress = this.selectedAddressId === 'new';
-      this.render();
-    });
-
-    // Handle new address form
-    const newAddressForm = this.shadowRoot.querySelector('#new-address-form');
-    newAddressForm?.addEventListener('submit', (e) => {
-      e.preventDefault();
-      this.submitAddressForm();
-    });
-
-    // Handle form input changes
-    const formInputs = this.shadowRoot.querySelectorAll('#new-address-form input, #new-address-form select');
-    formInputs.forEach(input => {
-      input.addEventListener('change', (e) => {
-        const target = e.target as HTMLInputElement | HTMLSelectElement;
-        const field = target.name as keyof AddressData;
-        this.newAddress[field] = target.value;
-      });
-    });
-
-    // Handle submit button
-    const submitButton = this.shadowRoot.querySelector('#address-submit');
-    submitButton?.addEventListener('click', () => {
-      this.submitAddressSelection();
-    });
+  private handleAddressChange(e: Event) {
+    const select = e.target as HTMLSelectElement;
+    this.selectedAddressId = select.value;
+    this.isAddingNewAddress = this.selectedAddressId === 'new';
+    this.requestUpdate();
   }
 
-  private async submitAddressForm() {
+  private handleFormInput(e: Event) {
+    const target = e.target as HTMLInputElement | HTMLSelectElement;
+    const field = target.name as keyof AddressData;
+    this.newAddress = {
+      ...this.newAddress,
+      [field]: target.value
+    };
+  }
+
+  private async submitAddressForm(e: Event) {
+    e.preventDefault();
+    
     try {
       // Validate the form
       if (!this.newAddress.country || !this.newAddress.firstName || !this.newAddress.lastName || 
@@ -224,10 +263,13 @@ class SplitShippingAddressSection extends HTMLElement {
 
       // Add the new address to the list
       const newAddressId = `new-${Date.now()}`;
-      this.addresses.push({
-        ...this.newAddress,
-        id: newAddressId
-      });
+      this.addresses = [
+        ...this.addresses,
+        {
+          ...this.newAddress,
+          id: newAddressId
+        }
+      ];
 
       // Select the new address
       this.selectedAddressId = newAddressId;
@@ -243,18 +285,20 @@ class SplitShippingAddressSection extends HTMLElement {
         email: ''
       };
 
-      this.render();
+      this.requestUpdate();
       
       // Dispatch event to notify that a new address has been added
       this.dispatchEvent(new CustomEvent('address-added', {
         detail: {
-          addressId: newAddressId
+          cartItemId: this.cartItemId,
+          address: this.addresses.find(addr => addr.id === newAddressId)
         },
         bubbles: true,
         composed: true
       }));
     } catch (error) {
-      console.error('Error submitting address form:', error);
+      console.error('Error adding new address:', error);
+      alert('Failed to add new address');
     }
   }
 
@@ -271,14 +315,11 @@ class SplitShippingAddressSection extends HTMLElement {
         throw new Error('Selected address not found');
       }
 
-      // Prepare the address data (remove the id field which is not part of the commercetools Address type)
-      const { id, label, ...addressData } = selectedAddress;
-
       // Dispatch event to notify that an address has been selected
       this.dispatchEvent(new CustomEvent('address-selected', {
         detail: {
           cartItemId: this.cartItemId,
-          address: addressData
+          address: selectedAddress
         },
         bubbles: true,
         composed: true
@@ -293,177 +334,179 @@ class SplitShippingAddressSection extends HTMLElement {
   }
 
   private getAddressDisplayName(address: AddressData): string {
-    const parts = [
-      address.firstName || '',
-      address.lastName || '',
-      address.streetName || '',
-      address.city || '',
-      address.postalCode || '',
-      address.country || ''
-    ].filter(Boolean);
+    if (!address) return '';
     
-    let displayName = parts.join(', ');
+    const parts = [];
     
-    // Add label if present (e.g., "Default Shipping")
-    if (address.label) {
-      displayName += address.label;
+    if (address.firstName && address.lastName) {
+      parts.push(`${address.firstName} ${address.lastName}`);
     }
     
-    return displayName;
+    if (address.streetName) {
+      parts.push(address.streetName);
+    }
+    
+    if (address.city && address.postalCode) {
+      parts.push(`${address.city}, ${address.postalCode}`);
+    } else if (address.city) {
+      parts.push(address.city);
+    }
+    
+    if (address.country) {
+      parts.push(address.country);
+    }
+    
+    if (address.label) {
+      parts.push(address.label);
+    }
+    
+    return parts.join(' - ');
   }
 
-  private render() {
-    if (!this.shadowRoot) return;
-
-    this.shadowRoot.innerHTML = `
-      <style>
-        .address-section {
-          font-family: sans-serif;
-        }
-        
-        .form-group {
-          margin-bottom: 16px;
-        }
-        
-        label {
-          display: block;
-          margin-bottom: 4px;
-          font-weight: bold;
-        }
-        
-        select, input {
-          width: 100%;
-          padding: 8px;
-          border: 1px solid #ccc;
-          border-radius: 4px;
-          font-size: 14px;
-        }
-        
-        .new-address-form {
-          margin-top: 16px;
-          padding: 16px;
-          border: 1px solid #eee;
-          border-radius: 4px;
-          background-color: #f9f9f9;
-        }
-        
-        .form-row {
-          display: flex;
-          gap: 16px;
-          margin-bottom: 16px;
-        }
-        
-        .form-row > div {
-          flex: 1;
-        }
-        
-        .required::after {
-          content: " *";
-          color: red;
-        }
-        
-        button {
-          background-color: #3f51b5;
-          color: white;
-          border: none;
-          padding: 8px 16px;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 14px;
-        }
-        
-        button:hover {
-          background-color: #303f9f;
-        }
-        
-        .button-container {
-          margin-top: 24px;
-          display: flex;
-          justify-content: flex-end;
-        }
-      </style>
-      
+  render() {
+    return html`
       <div class="address-section">
-        <div class="form-group">
-          <label for="address-select">Select Shipping Address</label>
-          <select id="address-select">
-            ${this.addresses.map(address => `
-              <option value="${address.id}" ${this.selectedAddressId === address.id ? 'selected' : ''}>
-                ${this.getAddressDisplayName(address)}
-              </option>
-            `).join('')}
-            <option value="new" ${this.isAddingNewAddress ? 'selected' : ''}>Add New Address</option>
-          </select>
-        </div>
+        <h4>Select a shipping address</h4>
         
-        ${this.isAddingNewAddress ? `
-          <form id="new-address-form" class="new-address-form">
-            <div class="form-row">
-              <div class="form-group">
-                <label for="firstName" class="required">First Name</label>
-                <input type="text" id="firstName" name="firstName" required value="${this.newAddress.firstName || ''}">
-              </div>
-              <div class="form-group">
-                <label for="lastName" class="required">Last Name</label>
-                <input type="text" id="lastName" name="lastName" required value="${this.newAddress.lastName || ''}">
-              </div>
-            </div>
-            
-            <div class="form-group">
-              <label for="streetName" class="required">Street Address</label>
-              <input type="text" id="streetName" name="streetName" required value="${this.newAddress.streetName || ''}">
-            </div>
-            
-            <div class="form-row">
-              <div class="form-group">
-                <label for="city" class="required">City</label>
-                <input type="text" id="city" name="city" required value="${this.newAddress.city || ''}">
-              </div>
-              <div class="form-group">
-                <label for="postalCode" class="required">Postal Code</label>
-                <input type="text" id="postalCode" name="postalCode" required value="${this.newAddress.postalCode || ''}">
-              </div>
-            </div>
-            
-            <div class="form-group">
-              <label for="country" class="required">Country</label>
-              <select id="country" name="country" required>
-                <option value="" ${!this.newAddress.country ? 'selected' : ''}>Select Country</option>
-                <option value="US" ${this.newAddress.country === 'US' ? 'selected' : ''}>United States</option>
-                <option value="CA" ${this.newAddress.country === 'CA' ? 'selected' : ''}>Canada</option>
-                <option value="GB" ${this.newAddress.country === 'GB' ? 'selected' : ''}>United Kingdom</option>
-                <option value="DE" ${this.newAddress.country === 'DE' ? 'selected' : ''}>Germany</option>
-                <option value="FR" ${this.newAddress.country === 'FR' ? 'selected' : ''}>France</option>
-              </select>
-            </div>
-            
-            <div class="form-row">
-              <div class="form-group">
-                <label for="phone">Phone Number</label>
-                <input type="tel" id="phone" name="phone" value="${this.newAddress.phone || ''}">
-              </div>
-              <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" name="email" value="${this.newAddress.email || ''}">
-              </div>
-            </div>
-            
-            <div class="button-container">
-              <button type="submit">Add Address</button>
-            </div>
-          </form>
-        ` : ''}
+        <select 
+          id="address-select" 
+          class="address-select"
+          @change=${this.handleAddressChange}
+        >
+          ${this.addresses.map(address => html`
+            <option 
+              value=${address.id} 
+              ?selected=${address.id === this.selectedAddressId}
+            >
+              ${this.getAddressDisplayName(address)}
+            </option>
+          `)}
+          <option value="new" ?selected=${this.selectedAddressId === 'new'}>Add a new address</option>
+        </select>
+        
+        <form 
+          id="new-address-form" 
+          class=${classMap({ 'new-address-form': true, 'hidden': !this.isAddingNewAddress })}
+          @submit=${this.submitAddressForm}
+        >
+          <div class="form-field">
+            <label for="firstName">First Name *</label>
+            <input 
+              type="text" 
+              id="firstName" 
+              name="firstName" 
+              required 
+              .value=${this.newAddress.firstName || ''}
+              @input=${this.handleFormInput}
+            />
+          </div>
+          
+          <div class="form-field">
+            <label for="lastName">Last Name *</label>
+            <input 
+              type="text" 
+              id="lastName" 
+              name="lastName" 
+              required 
+              .value=${this.newAddress.lastName || ''}
+              @input=${this.handleFormInput}
+            />
+          </div>
+          
+          <div class="form-field full-width">
+            <label for="streetName">Street Address *</label>
+            <input 
+              type="text" 
+              id="streetName" 
+              name="streetName" 
+              required 
+              .value=${this.newAddress.streetName || ''}
+              @input=${this.handleFormInput}
+            />
+          </div>
+          
+          <div class="form-field">
+            <label for="city">City *</label>
+            <input 
+              type="text" 
+              id="city" 
+              name="city" 
+              required 
+              .value=${this.newAddress.city || ''}
+              @input=${this.handleFormInput}
+            />
+          </div>
+          
+          <div class="form-field">
+            <label for="postalCode">Postal Code *</label>
+            <input 
+              type="text" 
+              id="postalCode" 
+              name="postalCode" 
+              required 
+              .value=${this.newAddress.postalCode || ''}
+              @input=${this.handleFormInput}
+            />
+          </div>
+          
+          <div class="form-field">
+            <label for="country">Country *</label>
+            <select 
+              id="country" 
+              name="country" 
+              required 
+              .value=${this.newAddress.country || ''}
+              @change=${this.handleFormInput}
+            >
+              <option value="">Select a country</option>
+              <option value="US">United States</option>
+              <option value="CA">Canada</option>
+              <option value="GB">United Kingdom</option>
+              <option value="DE">Germany</option>
+              <option value="FR">France</option>
+              <!-- Add more countries as needed -->
+            </select>
+          </div>
+          
+          <div class="form-field">
+            <label for="phone">Phone</label>
+            <input 
+              type="tel" 
+              id="phone" 
+              name="phone" 
+              .value=${this.newAddress.phone || ''}
+              @input=${this.handleFormInput}
+            />
+          </div>
+          
+          <div class="form-field">
+            <label for="email">Email</label>
+            <input 
+              type="email" 
+              id="email" 
+              name="email" 
+              .value=${this.newAddress.email || ''}
+              @input=${this.handleFormInput}
+            />
+          </div>
+          
+          <div class="form-field full-width button-container">
+            <button type="submit">Add Address</button>
+          </div>
+        </form>
         
         <div class="button-container">
-          <button id="address-submit">Apply Address</button>
+          <button 
+            id="address-submit"
+            ?disabled=${!this.selectedAddressId || this.selectedAddressId === 'new'}
+            @click=${this.submitAddressSelection}
+          >
+            Continue with Selected Address
+          </button>
         </div>
       </div>
     `;
-
-    this.setupEventListeners();
   }
 }
 
-customElements.define('split-shipping-address-section', SplitShippingAddressSection);
-
-export default SplitShippingAddressSection; 
+customElements.define('split-shipping-address-section', SplitShippingAddressSection); 

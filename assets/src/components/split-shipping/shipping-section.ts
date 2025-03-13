@@ -1,4 +1,5 @@
 import type { Cart } from '@commercetools/platform-sdk';
+import { LitElement, html, css } from 'lit';
 
 interface ShippingMethod {
   id: string;
@@ -10,60 +11,117 @@ interface ShippingMethod {
   };
 }
 
-class SplitShippingShippingSection extends HTMLElement {
-  private cart: Cart | null = null;
-  private cartItemId: string = '';
-  private locale: string = 'en-US';
+export default class SplitShippingShippingSection extends LitElement {
+  static properties = {
+    cart: { type: Object },
+    cartItemId: { type: String, attribute: 'cart-item-id' },
+    locale: { type: String }
+  };
+
+  cart: Cart | null = null;
+  cartItemId: string = '';
+  locale: string = 'en-US';
+  
   private shippingMethods: ShippingMethod[] = [];
   private selectedShippingMethodId: string = '';
   private isLoading: boolean = false;
 
-  static get observedAttributes() {
-    return ['cart', 'cart-item-id', 'locale'];
-  }
-
-  constructor() {
-    super();
-    this.attachShadow({ mode: 'open' });
-  }
-
-  connectedCallback() {
-    this.fetchShippingMethods();
-    this.render();
-    this.setupEventListeners();
-  }
-
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    if (oldValue === newValue) return;
-
-    switch (name) {
-      case 'cart':
-        try {
-          this.cart = JSON.parse(newValue);
-        } catch (e) {
-          console.error('Invalid cart JSON:', e);
-        }
-        break;
-      case 'cart-item-id':
-        this.cartItemId = newValue;
-        break;
-      case 'locale':
-        this.locale = newValue;
-        break;
-    }
-
-    if (name === 'cart' || name === 'cart-item-id') {
-      this.fetchShippingMethods();
+  static styles = css`
+    .shipping-section {
+      font-family: sans-serif;
     }
     
-    this.render();
+    .shipping-methods {
+      margin-bottom: 24px;
+    }
+    
+    .shipping-method {
+      border: 1px solid #eee;
+      border-radius: 4px;
+      padding: 16px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+    }
+    
+    .shipping-method:hover {
+      background-color: #f9f9f9;
+    }
+    
+    .shipping-method.selected {
+      border-color: #3f51b5;
+      background-color: rgba(63, 81, 181, 0.05);
+    }
+    
+    .shipping-method-radio {
+      margin-right: 16px;
+    }
+    
+    .shipping-method-details {
+      flex: 1;
+    }
+    
+    .shipping-method-name {
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+    
+    .shipping-method-description {
+      color: #666;
+      font-size: 14px;
+    }
+    
+    .shipping-method-price {
+      font-weight: bold;
+      color: #333;
+    }
+    
+    .loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+      color: #666;
+    }
+    
+    button {
+      background-color: #3f51b5;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    
+    button:hover {
+      background-color: #303f9f;
+    }
+    
+    .button-container {
+      margin-top: 24px;
+      display: flex;
+      justify-content: flex-end;
+    }
+  `;
+
+  connectedCallback() {
+    super.connectedCallback();
+    this.fetchShippingMethods();
+  }
+
+  updated(changedProperties: Map<string, any>) {
+    if (changedProperties.has('cart') || changedProperties.has('cartItemId')) {
+      this.fetchShippingMethods();
+    }
   }
 
   private async fetchShippingMethods() {
     if (!this.cart) return;
 
     this.isLoading = true;
-    this.render();
+    this.requestUpdate();
 
     try {
       // In a real implementation, you would fetch shipping methods from the API
@@ -110,27 +168,13 @@ class SplitShippingShippingSection extends HTMLElement {
       console.error('Error fetching shipping methods:', error);
     } finally {
       this.isLoading = false;
-      this.render();
+      this.requestUpdate();
     }
   }
 
-  private setupEventListeners() {
-    if (!this.shadowRoot) return;
-
-    // Handle shipping method selection
-    const shippingMethodRadios = this.shadowRoot.querySelectorAll('input[name="shipping-method"]');
-    shippingMethodRadios.forEach(radio => {
-      radio.addEventListener('change', (e) => {
-        const target = e.target as HTMLInputElement;
-        this.selectedShippingMethodId = target.value;
-      });
-    });
-
-    // Handle submit button
-    const submitButton = this.shadowRoot.querySelector('#shipping-submit');
-    submitButton?.addEventListener('click', () => {
-      this.submitShippingSelection();
-    });
+  private handleShippingMethodChange(e: Event) {
+    const target = e.target as HTMLInputElement;
+    this.selectedShippingMethodId = target.value;
   }
 
   private async submitShippingSelection() {
@@ -164,128 +208,57 @@ class SplitShippingShippingSection extends HTMLElement {
     }
   }
 
-  private render() {
-    if (!this.shadowRoot) return;
-
-    this.shadowRoot.innerHTML = `
-      <style>
-        .shipping-section {
-          font-family: sans-serif;
-        }
-        
-        .shipping-methods {
-          margin-bottom: 24px;
-        }
-        
-        .shipping-method {
-          border: 1px solid #eee;
-          border-radius: 4px;
-          padding: 16px;
-          margin-bottom: 16px;
-          display: flex;
-          align-items: center;
-          cursor: pointer;
-        }
-        
-        .shipping-method:hover {
-          background-color: #f9f9f9;
-        }
-        
-        .shipping-method.selected {
-          border-color: #3f51b5;
-          background-color: rgba(63, 81, 181, 0.05);
-        }
-        
-        .shipping-method-radio {
-          margin-right: 16px;
-        }
-        
-        .shipping-method-details {
-          flex: 1;
-        }
-        
-        .shipping-method-name {
-          font-weight: bold;
-          margin-bottom: 4px;
-        }
-        
-        .shipping-method-description {
-          color: #666;
-          font-size: 14px;
-        }
-        
-        .shipping-method-price {
-          font-weight: bold;
-          color: #333;
-        }
-        
-        .loading {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          padding: 24px;
-          color: #666;
-        }
-        
-        button {
-          background-color: #3f51b5;
-          color: white;
-          border: none;
-          padding: 8px 16px;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 14px;
-        }
-        
-        button:hover {
-          background-color: #303f9f;
-        }
-        
-        .button-container {
-          margin-top: 24px;
-          display: flex;
-          justify-content: flex-end;
-        }
-      </style>
-      
+  render() {
+    return html`
       <div class="shipping-section">
-        ${this.isLoading ? `
-          <div class="loading">Loading shipping methods...</div>
-        ` : `
-          <div class="shipping-methods">
-            ${this.shippingMethods.length === 0 ? `
-              <p>No shipping methods available</p>
-            ` : this.shippingMethods.map(method => `
-              <label class="shipping-method ${this.selectedShippingMethodId === method.id ? 'selected' : ''}">
-                <input 
-                  type="radio" 
-                  name="shipping-method" 
-                  value="${method.id}" 
-                  class="shipping-method-radio"
-                  ${this.selectedShippingMethodId === method.id ? 'checked' : ''}
+        <h4>Select a shipping method</h4>
+        
+        ${this.isLoading ? 
+          html`<div class="loading">Loading shipping methods...</div>` : 
+          html`
+            <div class="shipping-methods">
+              ${this.shippingMethods.map(method => html`
+                <label 
+                  class="shipping-method ${method.id === this.selectedShippingMethodId ? 'selected' : ''}"
+                  for="shipping-method-${method.id}"
                 >
-                <div class="shipping-method-details">
-                  <div class="shipping-method-name">${method.name}</div>
-                  ${method.description ? `<div class="shipping-method-description">${method.description}</div>` : ''}
-                </div>
-                <div class="shipping-method-price">
-                  ${method.price.amount.toFixed(2)} ${method.price.currencyCode}
-                </div>
-              </label>
-            `).join('')}
-          </div>
-          
-          <div class="button-container">
-            <button id="shipping-submit">Apply Shipping Method</button>
-          </div>
-        `}
+                  <input 
+                    type="radio" 
+                    name="shipping-method" 
+                    id="shipping-method-${method.id}" 
+                    value="${method.id}" 
+                    class="shipping-method-radio"
+                    ?checked=${method.id === this.selectedShippingMethodId}
+                    @change=${this.handleShippingMethodChange}
+                  />
+                  <div class="shipping-method-details">
+                    <div class="shipping-method-name">${method.name}</div>
+                    ${method.description ? 
+                      html`<div class="shipping-method-description">${method.description}</div>` : 
+                      ''
+                    }
+                  </div>
+                  <div class="shipping-method-price">
+                    ${method.price.amount.toFixed(2)} ${method.price.currencyCode}
+                  </div>
+                </label>
+              `)}
+            </div>
+            
+            <div class="button-container">
+              <button 
+                id="shipping-submit"
+                ?disabled=${!this.selectedShippingMethodId}
+                @click=${this.submitShippingSelection}
+              >
+                Continue with Selected Shipping
+              </button>
+            </div>
+          `
+        }
       </div>
     `;
-
-    this.setupEventListeners();
   }
 }
 
-customElements.define('split-shipping-shipping-section', SplitShippingShippingSection);
-
-export default SplitShippingShippingSection; 
+customElements.define('split-shipping-shipping-section', SplitShippingShippingSection); 

@@ -16,7 +16,8 @@
   "dependencies": {
     "@commercetools/platform-sdk": "^4.0.0",
     "@commercetools/sdk-client-v2": "^2.0.0",
-    "dotenv": "^16.0.3"
+    "dotenv": "^16.0.3",
+    "lit": "^3.2.1"
   },
   "packageManager": "yarn@1.22.22"
 }
