@@ -19,7 +19,7 @@
   price-currency="MXN"
   price-country="MX"
   locale="es-MX">
-</product-prices>
+</product-prices>   
 
 <step-variant-selector
   baseurl="http://localhost:8080/service"
@@ -27,6 +27,14 @@
   selectors='["sensor-input-1","sensor-input-2", "parameter", "range"]'
   locale="es-MX">
 </step-variant-selector>
+
+<split-shipping
+  base-url="http://localhost:8080/service"
+  locale="en-US"
+  cart-id="6a4852dd-7fd3-469b-9db2-d78ef6a31b7d"
+  cart-item-id="52e41171-bcc9-4683-bd5d-dedb5b5b0be2">
+  Split
+</split-shipping>
 
     </div>
     <script type="module" src="/src/main.ts"></script>
