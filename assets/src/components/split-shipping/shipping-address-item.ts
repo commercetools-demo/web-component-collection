@@ -28,49 +28,49 @@ export default class ShippingAddressItem extends LitElement {
 
   static styles = css`
     .address-item {
-      border: 1px solid #eee;
-      border-radius: 4px;
-      padding: 16px;
-      margin-bottom: 12px;
-      display: flex;
-      align-items: center;
+      border: var(--address-item-border, 1px solid #eee);
+      border-radius: var(--address-item-border-radius, 4px);
+      padding: var(--address-item-padding, 16px);
+      margin-bottom: var(--address-item-margin-bottom, 12px);
+      display: var(--address-item-display, flex);
+      align-items: var(--address-item-align-items, center);
     }
     
     .address-details {
-      flex: 1;
+      flex: var(--address-details-flex, 1);
     }
     
     .address-line {
-      margin-bottom: 4px;
+      margin-bottom: var(--address-line-margin-bottom, 4px);
     }
     
     .quantity-control {
-      display: flex;
-      align-items: center;
-      margin-left: 16px;
+      display: var(--quantity-control-display, flex);
+      align-items: var(--quantity-control-align-items, center);
+      margin-left: var(--quantity-control-margin-left, 16px);
     }
     
     .quantity-input {
-      width: 60px;
-      padding: 8px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      text-align: center;
-      margin: 0 8px;
+      width: var(--quantity-input-width, 60px);
+      padding: var(--quantity-input-padding, 8px);
+      border: var(--quantity-input-border, 1px solid #ddd);
+      border-radius: var(--quantity-input-border-radius, 4px);
+      text-align: var(--quantity-input-text-align, center);
+      margin: var(--quantity-input-margin, 0 8px);
     }
     
     .comment-input {
-      width: 100%;
-      padding: 8px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      margin-top: 8px;
+      width: var(--comment-input-width, 100%);
+      padding: var(--comment-input-padding, 8px);
+      border: var(--comment-input-border, 1px solid #ddd);
+      border-radius: var(--comment-input-border-radius, 4px);
+      margin-top: var(--comment-input-margin-top, 8px);
     }
     
     .error-message {
-      color: #d32f2f;
-      font-size: 12px;
-      margin-top: 4px;
+      color: var(--error-message-color, #d32f2f);
+      font-size: var(--error-message-font-size, 12px);
+      margin-top: var(--error-message-margin-top, 4px);
     }
   `;
 

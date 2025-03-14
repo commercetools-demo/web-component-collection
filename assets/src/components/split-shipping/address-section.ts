@@ -60,131 +60,89 @@ export default class SplitShippingAddressSection extends LitElement {
 
   static styles = css`
     .address-section {
-      font-family: sans-serif;
-      padding: 20px;
+      font-family: var(--address-section-font-family, sans-serif);
+      padding: var(--address-section-padding, 20px);
     }
     
     .dropzone {
-      border: 2px dashed #ccc;
-      border-radius: 8px;
-      padding: 40px 20px;
-      text-align: center;
-      margin-bottom: 20px;
-      transition: all 0.3s ease;
-      background-color: #f9f9f9;
-      cursor: pointer;
+      border: var(--dropzone-border, 2px dashed #ccc);
+      border-radius: var(--dropzone-border-radius, 8px);
+      padding: var(--dropzone-padding, 40px 20px);
+      text-align: var(--dropzone-text-align, center);
+      margin-bottom: var(--dropzone-margin-bottom, 20px);
+      transition: var(--dropzone-transition, all 0.3s ease);
+      background-color: var(--dropzone-background-color, #f9f9f9);
+      cursor: var(--dropzone-cursor, pointer);
     }
     
     .dropzone.dragging {
-      border-color: #3f51b5;
-      background-color: rgba(63, 81, 181, 0.1);
+      border-color: var(--dropzone-dragging-border-color, #3f51b5);
+      background-color: var(--dropzone-dragging-background-color, rgba(63, 81, 181, 0.1));
     }
     
     .dropzone-icon {
-      font-size: 48px;
-      color: #3f51b5;
-      margin-bottom: 10px;
+      font-size: var(--dropzone-icon-font-size, 48px);
+      color: var(--dropzone-icon-color, #3f51b5);
+      margin-bottom: var(--dropzone-icon-margin-bottom, 10px);
     }
     
     .dropzone-text {
-      margin-bottom: 15px;
-      font-size: 16px;
-      color: #555;
+      margin-bottom: var(--dropzone-text-margin-bottom, 15px);
+      font-size: var(--dropzone-text-font-size, 16px);
+      color: var(--dropzone-text-color, #555);
     }
     
     .file-input {
-      display: none;
+      display: var(--file-input-display, none);
     }
     
     .browse-button {
-      background-color: #3f51b5;
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-      margin-top: 10px;
+      background-color: var(--browse-button-background-color, #3f51b5);
+      color: var(--browse-button-color, white);
+      border: var(--browse-button-border, none);
+      padding: var(--browse-button-padding, 8px 16px);
+      border-radius: var(--browse-button-border-radius, 4px);
+      cursor: var(--browse-button-cursor, pointer);
+      font-size: var(--browse-button-font-size, 14px);
+      margin-top: var(--browse-button-margin-top, 10px);
     }
     
     .browse-button:hover {
-      background-color: #303f9f;
-    }
-    
-    .template-link {
-      display: block;
-      margin-top: 10px;
-      color: #3f51b5;
-      text-decoration: underline;
-      cursor: pointer;
-      font-size: 14px;
-    }
-    
-    .template-link:hover {
-      color: #303f9f;
+      background-color: var(--browse-button-hover-background-color, #303f9f);
     }
     
     .file-info {
-      margin-top: 10px;
-      font-size: 14px;
-      color: #666;
+      margin-top: var(--file-info-margin-top, 15px);
+      font-size: var(--file-info-font-size, 14px);
+      color: var(--file-info-color, #666);
     }
     
     .error-message {
-      color: #d32f2f;
-      margin-top: 10px;
-      font-size: 14px;
+      color: var(--error-message-color, #d32f2f);
+      margin: var(--error-message-margin, 15px 0);
+      padding: var(--error-message-padding, 10px);
+      background-color: var(--error-message-background-color, rgba(211, 47, 47, 0.1));
+      border-radius: var(--error-message-border-radius, 4px);
     }
     
-    .data-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-      margin-bottom: 20px;
+    .submit-button {
+      background-color: var(--submit-button-background-color, #4caf50);
+      color: var(--submit-button-color, white);
+      border: var(--submit-button-border, none);
+      padding: var(--submit-button-padding, 10px 20px);
+      border-radius: var(--submit-button-border-radius, 4px);
+      cursor: var(--submit-button-cursor, pointer);
+      font-size: var(--submit-button-font-size, 16px);
+      margin-top: var(--submit-button-margin-top, 20px);
     }
     
-    .data-table th, .data-table td {
-      border: 1px solid #ddd;
-      padding: 8px 12px;
-      text-align: left;
+    .submit-button:hover {
+      background-color: var(--submit-button-hover-background-color, #388e3c);
     }
     
-    .data-table th {
-      background-color: #f2f2f2;
-      font-weight: bold;
-    }
-    
-    .data-table tr:nth-child(even) {
-      background-color: #f9f9f9;
-    }
-    
-    .data-table tr:hover {
-      background-color: #f5f5f5;
-    }
-    
-    .button-container {
-      margin-top: 24px;
-      display: flex;
-      justify-content: flex-end;
-    }
-    
-    button {
-      background-color: #3f51b5;
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-    }
-    
-    button:hover {
-      background-color: #303f9f;
-    }
-    
-    button:disabled {
-      background-color: #cccccc;
-      cursor: not-allowed;
+    .submit-button:disabled {
+      background-color: var(--submit-button-disabled-background-color, #cccccc);
+      cursor: var(--submit-button-disabled-cursor, not-allowed);
     }
   `;
 

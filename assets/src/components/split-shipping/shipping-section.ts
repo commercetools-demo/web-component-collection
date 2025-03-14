@@ -23,67 +23,67 @@ export default class SplitShippingShippingSection extends LitElement {
 
   static styles = css`
     .shipping-section {
-      font-family: sans-serif;
-      padding: 20px;
+      font-family: var(--shipping-section-font-family, sans-serif);
+      padding: var(--shipping-section-padding, 20px);
     }
     
     .section-title {
-      font-size: 18px;
-      font-weight: bold;
-      margin-bottom: 16px;
-      color: #333;
+      font-size: var(--section-title-font-size, 18px);
+      font-weight: var(--section-title-font-weight, bold);
+      margin-bottom: var(--section-title-margin-bottom, 16px);
+      color: var(--section-title-color, #333);
     }
     
     .address-list {
-      margin-bottom: 24px;
+      margin-bottom: var(--address-list-margin-bottom, 24px);
     }
     
     .address-section-title {
-      font-size: 16px;
-      font-weight: bold;
-      margin: 16px 0 8px;
-      color: #555;
+      font-size: var(--address-section-title-font-size, 16px);
+      font-weight: var(--address-section-title-font-weight, bold);
+      margin: var(--address-section-title-margin, 16px 0 8px);
+      color: var(--address-section-title-color, #555);
     }
     
     .loading {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 24px;
-      color: #666;
+      display: var(--loading-display, flex);
+      justify-content: var(--loading-justify-content, center);
+      align-items: var(--loading-align-items, center);
+      padding: var(--loading-padding, 24px);
+      color: var(--loading-color, #666);
     }
     
     .error-message {
-      color: #d32f2f;
-      margin: 16px 0;
-      padding: 8px;
-      background-color: rgba(211, 47, 47, 0.1);
-      border-radius: 4px;
+      color: var(--error-message-color, #d32f2f);
+      margin: var(--error-message-margin, 16px 0);
+      padding: var(--error-message-padding, 8px);
+      background-color: var(--error-message-background-color, rgba(211, 47, 47, 0.1));
+      border-radius: var(--error-message-border-radius, 4px);
     }
     
     button {
-      background-color: #3f51b5;
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
+      background-color: var(--button-background-color, #3f51b5);
+      color: var(--button-color, white);
+      border: var(--button-border, none);
+      padding: var(--button-padding, 8px 16px);
+      border-radius: var(--button-border-radius, 4px);
+      cursor: var(--button-cursor, pointer);
+      font-size: var(--button-font-size, 14px);
     }
     
     button:hover {
-      background-color: #303f9f;
+      background-color: var(--button-hover-background-color, #303f9f);
     }
     
     button:disabled {
-      background-color: #cccccc;
-      cursor: not-allowed;
+      background-color: var(--button-disabled-background-color, #cccccc);
+      cursor: var(--button-disabled-cursor, not-allowed);
     }
     
     .button-container {
-      margin-top: 24px;
-      display: flex;
-      justify-content: flex-end;
+      margin-top: var(--button-container-margin-top, 24px);
+      display: var(--button-container-display, flex);
+      justify-content: var(--button-container-justify-content, flex-end);
     }
   `;
 

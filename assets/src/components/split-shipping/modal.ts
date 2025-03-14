@@ -18,85 +18,85 @@ export default class SplitShippingModal extends LitElement {
 
   static styles = css`
     .modal-backdrop {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
+      position: var(--modal-backdrop-position, fixed);
+      top: var(--modal-backdrop-top, 0);
+      left: var(--modal-backdrop-left, 0);
+      width: var(--modal-backdrop-width, 100%);
+      height: var(--modal-backdrop-height, 100%);
+      background-color: var(--modal-backdrop-background-color, rgba(0, 0, 0, 0.5));
+      display: var(--modal-backdrop-display, flex);
+      align-items: var(--modal-backdrop-align-items, center);
+      justify-content: var(--modal-backdrop-justify-content, center);
+      z-index: var(--modal-backdrop-z-index, 1000);
     }
     
     .modal-content {
-      background-color: white;
-      border-radius: 4px;
-      width: 90%;
-      max-width: 800px;
-      max-height: 90vh;
-      overflow-y: auto;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      display: flex;
-      flex-direction: column;
+      background-color: var(--modal-content-background-color, white);
+      border-radius: var(--modal-content-border-radius, 4px);
+      width: var(--modal-content-width, 90%);
+      max-width: var(--modal-content-max-width, 800px);
+      max-height: var(--modal-content-max-height, 90vh);
+      overflow-y: var(--modal-content-overflow-y, auto);
+      box-shadow: var(--modal-content-box-shadow, 0 4px 8px rgba(0, 0, 0, 0.1));
+      display: var(--modal-content-display, flex);
+      flex-direction: var(--modal-content-flex-direction, column);
     }
     
     .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 16px;
-      border-bottom: 1px solid #eee;
+      display: var(--modal-header-display, flex);
+      justify-content: var(--modal-header-justify-content, space-between);
+      align-items: var(--modal-header-align-items, center);
+      padding: var(--modal-header-padding, 16px);
+      border-bottom: var(--modal-header-border-bottom, 1px solid #eee);
     }
     
     .modal-title {
-      margin: 0;
-      font-size: 18px;
-      font-weight: bold;
+      margin: var(--modal-title-margin, 0);
+      font-size: var(--modal-title-font-size, 18px);
+      font-weight: var(--modal-title-font-weight, bold);
     }
     
     .modal-close {
-      background: none;
-      border: none;
-      font-size: 24px;
-      cursor: pointer;
-      color: #666;
+      background: var(--modal-close-background, none);
+      border: var(--modal-close-border, none);
+      font-size: var(--modal-close-font-size, 24px);
+      cursor: var(--modal-close-cursor, pointer);
+      color: var(--modal-close-color, #666);
     }
     
     .modal-body {
-      padding: 16px;
-      flex: 1;
+      padding: var(--modal-body-padding, 16px);
+      flex: var(--modal-body-flex, 1);
     }
     
     .section {
-      margin-bottom: 24px;
-      border: 1px solid #eee;
-      border-radius: 4px;
+      margin-bottom: var(--section-margin-bottom, 24px);
+      border: var(--section-border, 1px solid #eee);
+      border-radius: var(--section-border-radius, 4px);
     }
     
     .section-header {
-      padding: 12px 16px;
-      background-color: #f5f5f5;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      cursor: pointer;
-      border-bottom: 1px solid #eee;
+      padding: var(--section-header-padding, 12px 16px);
+      background-color: var(--section-header-background-color, #f5f5f5);
+      display: var(--section-header-display, flex);
+      justify-content: var(--section-header-justify-content, space-between);
+      align-items: var(--section-header-align-items, center);
+      cursor: var(--section-header-cursor, pointer);
+      border-bottom: var(--section-header-border-bottom, 1px solid #eee);
     }
     
     .section-title {
-      margin: 0;
-      font-size: 16px;
-      font-weight: bold;
+      margin: var(--section-title-margin, 0);
+      font-size: var(--section-title-font-size, 16px);
+      font-weight: var(--section-title-font-weight, bold);
     }
     
     .section-toggle {
-      font-size: 18px;
+      font-size: var(--section-toggle-font-size, 18px);
     }
     
     .section-content {
-      padding: 16px;
+      padding: var(--section-content-padding, 16px);
     }
     
     .hidden {

@@ -17,24 +17,25 @@ export default class SplitShipping extends LitElement {
   isOpen: boolean = false;
   
   private cart: Cart | null = null;
+  private accountId: string = '';
 
   static styles = css`
     .split-shipping-button {
-      background-color: #3f51b5;
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-family: sans-serif;
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      background-color: var(--split-shipping-button-background-color, #3f51b5);
+      color: var(--split-shipping-button-color, white);
+      border: var(--split-shipping-button-border, none);
+      padding: var(--split-shipping-button-padding, 8px 16px);
+      border-radius: var(--split-shipping-button-border-radius, 4px);
+      cursor: var(--split-shipping-button-cursor, pointer);
+      font-family: var(--split-shipping-button-font-family, sans-serif);
+      font-size: var(--split-shipping-button-font-size, 14px);
+      display: var(--split-shipping-button-display, flex);
+      align-items: var(--split-shipping-button-align-items, center);
+      justify-content: var(--split-shipping-button-justify-content, center);
     }
     
     .split-shipping-button:hover {
-      background-color: #303f9f;
+      background-color: var(--split-shipping-button-hover-background-color, #303f9f);
     }
   `;
 
