@@ -17,7 +17,6 @@ export default class SplitShipping extends LitElement {
   isOpen: boolean = false;
   
   private cart: Cart | null = null;
-  private accountId: string = '';
 
   static styles = css`
     .split-shipping-button {
@@ -71,23 +70,6 @@ export default class SplitShipping extends LitElement {
     } catch (error) {
       console.error('Error fetching cart data:', error);
       throw error;
-    }
-  }
-
-  private async fetchAccountData() {
-    if (!this.accountId || !this.baseUrl) {
-      return null;
-    }
-
-    try {
-      const response = await fetch(`${this.baseUrl}/account/${this.accountId}`);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch account: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching account data:', error);
-      return null;
     }
   }
 
