@@ -1,6 +1,5 @@
 import type { Cart } from '@commercetools/platform-sdk';
 import { LitElement, html, css } from 'lit';
-import { classMap } from 'lit/directives/class-map.js';
 
 // Define our own Address interface to avoid read-only properties
 interface AddressData {
@@ -377,7 +376,7 @@ export default class SplitShippingAddressSection extends LitElement {
 
     try {
       // Convert CSV data to address data format
-      const addresses: AddressData[] = this.csvData.map((row, index) => ({
+      const addresses: AddressData[] = this.csvData.map((row) => ({
         key: `csv-${row.firstName}-${row.lastName}`,
         country: row.country,
         firstName: row.firstName,

@@ -2,22 +2,14 @@ import type { Cart } from '@commercetools/platform-sdk';
 import { LitElement, html, css } from 'lit';
 import { classMap } from 'lit/directives/class-map.js';
 
-interface Account {
-  id: string;
-  addresses?: any[];
-  [key: string]: any;
-}
-
 export default class SplitShippingModal extends LitElement {
   static properties = {
     cart: { type: Object },
-    account: { type: Object },
     cartItemId: { type: String, attribute: 'cart-item-id' },
     locale: { type: String },
   };
 
   cart: Cart | null = null;
-  account: Account | null = null;
   cartItemId: string = '';
   locale: string = 'en-US';
   
@@ -174,7 +166,6 @@ export default class SplitShippingModal extends LitElement {
               <div class=${classMap({ 'section-content': true, 'hidden': !this.addressSectionExpanded })}>
                 <split-shipping-address-section 
                   .cart=${this.cart}
-                  .account=${this.account}
                   .cartItemId=${this.cartItemId}
                   .locale=${this.locale}
                   @addresses-selected=${this.handleAddressesSelected}

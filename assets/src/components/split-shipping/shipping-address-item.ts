@@ -96,28 +96,6 @@ export default class ShippingAddressItem extends LitElement {
     }));
   }
 
-  private handleCommentChange(e: Event) {
-    const target = e.target as HTMLInputElement;
-    const newComment = target.value;
-    
-    // Create a new address object with the updated comment
-    const updatedAddress = {
-      ...this.address,
-      comment: newComment
-    };
-    
-    // Dispatch event to notify parent component
-    this.dispatchEvent(new CustomEvent('comment-changed', {
-      detail: {
-        addressKey: this.address.key,
-        comment: newComment,
-        address: updatedAddress
-      },
-      bubbles: true,
-      composed: true
-    }));
-  }
-
   private formatAddress(address: ShippingAddress): string {
     const parts = [
       address.firstName,

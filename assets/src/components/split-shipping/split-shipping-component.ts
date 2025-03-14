@@ -7,7 +7,6 @@ export default class SplitShipping extends LitElement {
     locale: { type: String },
     cartId: { type: String, attribute: 'cart-id' },
     cartItemId: { type: String, attribute: 'cart-item-id' },
-    accountId: { type: String, attribute: 'account-id' },
     isOpen: { type: Boolean, state: true }
   };
 
@@ -15,11 +14,9 @@ export default class SplitShipping extends LitElement {
   locale: string = 'en-US';
   cartId: string = '';
   cartItemId: string = '';
-  accountId: string = '';
   isOpen: boolean = false;
   
   private cart: Cart | null = null;
-  private accountData: any = null;
 
   static styles = css`
     .split-shipping-button {
@@ -43,14 +40,7 @@ export default class SplitShipping extends LitElement {
 
   private async openModal() {
     try {
-      // Fetch both cart and account data in parallel
-      const [cartData, accountData] = await Promise.all([
-        this.fetchCartData(),
-        this.fetchAccountData()
-      ]);
-      
-      this.accountData = accountData;
-      // Open the modal
+      await this.fetchCartData()
       this.isOpen = true;
     } catch (error) {
       console.error('Error opening split shipping modal:', error);
@@ -173,7 +163,6 @@ export default class SplitShipping extends LitElement {
         <split-shipping-modal
           .locale=${this.locale}
           .cart=${this.cart}
-          .account=${this.accountData}
           .cartItemId=${this.cartItemId}
           @close=${this.closeModal}
           @addresses-selected=${this.handleAddressesSelected}

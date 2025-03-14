@@ -136,7 +136,7 @@ export default class SplitShippingShippingSection extends LitElement {
   }
 
   private handleQuantityChanged(e: CustomEvent) {
-    const { addressKey, quantity, address } = e.detail;
+    const { addressKey, quantity } = e.detail;
     
     // Find and update the address in our array
     const index = this.itemShippingAddresses.findIndex(addr => addr.key === addressKey);
