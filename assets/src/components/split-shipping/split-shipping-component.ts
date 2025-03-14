@@ -139,7 +139,29 @@ export default class SplitShipping extends LitElement {
     }
   }
 
+  private async handleShippingAllocationSubmitted(event: CustomEvent) {
+    if (!this.baseUrl || !this.cartId || !this.cartItemId) {
+      console.error('Missing required parameters for updating item shipping address');
+      return;
+    }
 
+    const response = await fetch(`${this.baseUrl}/carts/${this.cartId}/line-items/${this.cartItemId}/shipping-addresses`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        targets: event.detail.targets
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to update item shipping address: ${response.statusText}`);
+    }
+
+    const updatedCart = await response.json();  
+    this.cart = updatedCart;
+  }
 
   render() {
     return html`
@@ -155,6 +177,7 @@ export default class SplitShipping extends LitElement {
           .cartItemId=${this.cartItemId}
           @close=${this.closeModal}
           @addresses-selected=${this.handleAddressesSelected}
+          @shipping-allocation-submitted=${this.handleShippingAllocationSubmitted}
         ></split-shipping-modal>
       ` : ''}
     `;

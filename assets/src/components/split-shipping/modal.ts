@@ -152,6 +152,10 @@ export default class SplitShippingModal extends LitElement {
     this.toggleAddressSection();
   }
 
+  private handleShippingAllocationSubmitted(event: CustomEvent) {
+    this.dispatchEvent(event);
+  }
+
   render() {
     return html`
       <div class="modal-backdrop" @click=${this.handleBackdropClick}>
@@ -188,6 +192,7 @@ export default class SplitShippingModal extends LitElement {
                   .cart=${this.cart}
                   .cartItemId=${this.cartItemId}
                   .locale=${this.locale}
+                  @shipping-allocation-submitted=${this.handleShippingAllocationSubmitted}
                 ></split-shipping-shipping-section>
               </div>
             </div>

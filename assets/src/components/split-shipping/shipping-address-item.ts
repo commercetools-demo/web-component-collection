@@ -87,7 +87,7 @@ export default class ShippingAddressItem extends LitElement {
     // Dispatch event to notify parent component
     this.dispatchEvent(new CustomEvent('quantity-changed', {
       detail: {
-        addressId: this.address.id,
+        addressKey: this.address.key,
         quantity: newQuantity,
         address: updatedAddress
       },
@@ -109,7 +109,7 @@ export default class ShippingAddressItem extends LitElement {
     // Dispatch event to notify parent component
     this.dispatchEvent(new CustomEvent('comment-changed', {
       detail: {
-        addressId: this.address.id,
+        addressKey: this.address.key,
         comment: newComment,
         address: updatedAddress
       },
@@ -138,13 +138,6 @@ export default class ShippingAddressItem extends LitElement {
       <div class="address-item">
         <div class="address-details">
           <div class="address-line">${this.formatAddress(this.address)}</div>
-          <input 
-            type="text" 
-            class="comment-input" 
-            placeholder="Add a comment (optional)"
-            .value=${this.address.comment || ''}
-            @input=${this.handleCommentChange}
-          />
         </div>
         <div class="quantity-control">
           <label>Quantity:</label>

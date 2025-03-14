@@ -112,15 +112,13 @@ export default class SplitShippingShippingSection extends LitElement {
         throw new Error(`Line item with ID ${this.cartItemId} not found in cart`);
       }
 
-      console.log('Resetting item shipping addresses');
-
       // Map cart.itemShippingAddresses to our ShippingAddress type
       this.itemShippingAddresses = (this.cart.itemShippingAddresses || [])
         .map(address => ({
           ...address,
           id: address.id || '', // Ensure id is always a string
           country: address.country, // Required by our interface
-          quantity: 0, // Default quantity
+          quantity: this.currentLineItem?.shippingDetails?.targets.find(target => target.addressKey === address.key)?.quantity || 0,
           comment: '' // Default comment
         }));
 
@@ -138,10 +136,10 @@ export default class SplitShippingShippingSection extends LitElement {
   }
 
   private handleQuantityChanged(e: CustomEvent) {
-    const { addressId, quantity, address } = e.detail;
+    const { addressKey, quantity, address } = e.detail;
     
     // Find and update the address in our array
-    const index = this.itemShippingAddresses.findIndex(addr => addr.id === addressId);
+    const index = this.itemShippingAddresses.findIndex(addr => addr.key === addressKey);
     
     if (index !== -1) {
       this.itemShippingAddresses[index].quantity = quantity;
@@ -150,10 +148,10 @@ export default class SplitShippingShippingSection extends LitElement {
   }
 
   private handleCommentChanged(e: CustomEvent) {
-    const { addressId, comment } = e.detail;
+    const { addressKey, comment } = e.detail;
     
     // Find and update the address in our array
-    const index = this.itemShippingAddresses.findIndex(addr => addr.id === addressId);
+    const index = this.itemShippingAddresses.findIndex(addr => addr.key === addressKey);
     
     if (index !== -1) {
       this.itemShippingAddresses[index].comment = comment;
@@ -180,22 +178,24 @@ export default class SplitShippingShippingSection extends LitElement {
     try {
       // Get all addresses with their quantities
       const allocatedAddresses = this.itemShippingAddresses.filter(addr => addr.quantity > 0);
+      const targets = allocatedAddresses.map(addr => ({
+        addressKey: addr.key,
+        quantity: addr.quantity
+      }));
 
       // Dispatch event to notify that addresses have been allocated
       this.dispatchEvent(new CustomEvent('shipping-allocation-submitted', {
         detail: {
-          cartItemId: this.cartItemId,
-          addresses: allocatedAddresses
+          lineItemId: this.cartItemId,
+          targets: targets
         },
         bubbles: true,
         composed: true
       }));
 
       // Show success message
-      alert('Shipping allocation submitted successfully');
     } catch (error) {
       console.error('Error submitting shipping allocation:', error);
-      alert('Failed to submit shipping allocation');
     }
   }
 

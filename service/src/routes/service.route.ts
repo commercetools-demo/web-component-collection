@@ -3,8 +3,7 @@ import { logger } from '../utils/logger.utils';
 import { getGoogleMapApiKey } from '../controllers/googleMap.controller';
 import { getStores, getStoreById } from '../controllers/stores.controller';
 import { getProductByIdController, getProductBySkuController, getProductTypeByIdController } from '../controllers/products.controller';
-import { getCartByIdController, updateCartItemAddressesController } from '../controllers/cart.controller';
-
+import { getCartByIdController, updateCartItemAddressesController, setLineItemShippingAddressesController } from '../controllers/cart.controller';
 const serviceRouter = Router();
 
 
@@ -49,4 +48,5 @@ serviceRouter.get('/carts/:id', getCartByIdController);
 
 serviceRouter.post('/carts/:id/add-item-shipping-addresses', updateCartItemAddressesController);
 
+serviceRouter.post('/carts/:id/line-items/:lineItemId/shipping-addresses', setLineItemShippingAddressesController);
 export default serviceRouter;

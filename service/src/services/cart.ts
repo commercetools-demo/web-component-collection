@@ -21,7 +21,7 @@ export const updateCartItemAddresses = async (id: string, addresses: any[]) => {
             if (!address.key) {
                 return true;
             }
-            
+
             // Skip addresses with keys that already exist in the cart
             return !existingAddressKeys.has(address.key);
         });
@@ -38,6 +38,28 @@ export const updateCartItemAddresses = async (id: string, addresses: any[]) => {
                     action: "addItemShippingAddress",
                     address: address
                 }))
+            }
+        }).execute();
+    });
+    return cart.body;
+};
+
+export const setLineItemShippingAddresses = async (id: string, lineItemId: string, targets: any[]) => {
+    const apiRoot = createApiRoot();
+    const cart = await getCartById(id).then((cart) => {
+        return apiRoot.carts().withId({ ID: id }).post({
+            body: {
+                version: cart.version,
+                actions: [
+                    {
+                        action: "setLineItemShippingDetails",
+                        lineItemId: lineItemId,
+                        ...(targets && {
+                            shippingDetails:{
+                                targets: targets
+                            }
+                        })
+                    }]
             }
         }).execute();
     });
