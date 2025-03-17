@@ -13,6 +13,9 @@ A component that displays a list of available prices for a product SKU, showing 
 ### [StepVariantSelector](./src/components/step-variant-selector/README.md)
 A component that allows users to select a variant of a product by selecting values for a set of attributes.
 
+### [SplitShipping](./src/components/split-shipping/README.md)
+A component that allows users to split shipping between multiple addresses.
+
 
 ## Use in React
 Add the following script to your HTML file or use the script tag in your React component:
@@ -33,20 +36,20 @@ interface Props {
   sku?: string;
   selectors?: string;
   locale?: string;
-  onChangeSku?: (sku: string) => void;
+  onChangeSku?: (sku: string) => void; // optional callback to handle events
 }
 
 const StepVariantSelector: React.FC<Props> = ({ onChangeSku, ...props }) => {
   const ref = useRef<HTMLDivElement>(null);
 
-  const eventListener = (event: any) => {
+  const eventListener = (event: any) => { // event listener for custom events
     onChangeSku?.(event.detail.sku);
   };
 
   useEffect(() => {
     if (ref.current) {
       const element = document.createElement('step-variant-selector');
-      element.addEventListener('sku-selected', eventListener);
+      element.addEventListener('sku-selected', eventListener); // add event listener for custom events
 
       Object.entries(props).forEach(([key, value]) => {
         if (typeof value === 'string') {

@@ -7,7 +7,7 @@
   </head>
   <body>
     <div id="app">
-      <stores-map 
+      <!-- <stores-map 
   base-url="http://localhost:8080/service" 
   locale="en-US">
   <span slot="trigger">Select Store</span>
@@ -19,14 +19,22 @@
   price-currency="MXN"
   price-country="MX"
   locale="es-MX">
-</product-prices>
+</product-prices>   
 
 <step-variant-selector
   baseurl="http://localhost:8080/service"
   sku="surfactants-3"
   selectors='["sensor-input-1","sensor-input-2", "parameter", "range"]'
   locale="es-MX">
-</step-variant-selector>
+</step-variant-selector> -->
+
+<split-shipping
+  base-url="http://localhost:8080/service"
+  locale="en-US"
+  cart-id="45bf8705-e1c2-4d5a-8d41-f254012c3ced"
+  cart-item-id="cb1a6e53-d663-4366-94b7-5e1a7a12dc41">
+  Split
+</split-shipping>
 
     </div>
     <script type="module" src="/src/main.ts"></script>
