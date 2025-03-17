@@ -2,6 +2,7 @@ import type { Cart } from '@commercetools/platform-sdk';
 import { LitElement, html, css } from 'lit';
 import { state } from 'lit/decorators.js';
 import './modal';
+import { ShippingAddress } from './shipping-address-item';
 
 export default class SplitShipping extends LitElement {
   static properties = {
@@ -130,13 +131,58 @@ export default class SplitShipping extends LitElement {
       return;
     }
 
+
+
+    /////
+
+    const itemShippingAddresses: ShippingAddress[] = event.detail.itemShippingAddresses;
+
+    try {
+      // Get all addresses with their quantities
+      const allocatedAddresses = itemShippingAddresses.filter(addr => addr.quantity > 0);
+      const targets = allocatedAddresses.map(addr => ({
+        addressKey: addr.key,
+        quantity: addr.quantity
+      }));
+
+      // Find addresses with changed additionalAddressInfo
+      const addressesWithChangedComments = itemShippingAddresses.filter(addr => {
+        // Find the corresponding address in the cart's itemShippingAddresses
+        const originalAddress = this.cart?.itemShippingAddresses?.find(
+          cartAddr => cartAddr.key === addr.key
+        );
+        
+        // Check if additionalAddressInfo has changed
+        return originalAddress && 
+               addr.additionalAddressInfo !== originalAddress.additionalAddressInfo 
+      });
+
+      // Dispatch event to notify that addresses have been allocated
+      await this.updateCartTargets(targets);
+      
+
+      // If there are addresses with changed comments, dispatch another event
+      if (addressesWithChangedComments.length > 0) {
+        await this.updateCartAddresses(addressesWithChangedComments);
+      }
+
+      // Show success message
+    } catch (error) {
+      console.error('Error submitting shipping allocation:', error);
+    }
+
+
+  }
+
+  private async updateCartTargets(targets: any[]) {
+
     const response = await fetch(`${this.baseUrl}/carts/${this.cartId}/line-items/${this.cartItemId}/shipping-addresses`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        targets: event.detail.targets
+        targets: targets
       })
     });
 
@@ -146,6 +192,38 @@ export default class SplitShipping extends LitElement {
 
     const updatedCart = await response.json();  
     this.cart = updatedCart;
+  }
+
+  private async updateCartAddresses(addresses: ShippingAddress[]) {
+
+    try {
+      
+      if (!addresses || !Array.isArray(addresses)) {
+        return;
+      }
+
+      const response = await fetch(`${this.baseUrl}/carts/${this.cartId}/update-item-shipping-addresses`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          cartItemId: this.cartItemId,
+          addresses: addresses
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to update item shipping address: ${response.statusText}`);
+      }
+
+      // Update the cart with the new data
+      const updatedCart = await response.json();
+      this.cart = updatedCart;
+
+    } catch (error) {
+      console.error('Error updating item shipping address:', error);
+    }
   }
 
   render() {

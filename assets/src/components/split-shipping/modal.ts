@@ -100,7 +100,7 @@ export default class SplitShippingModal extends LitElement {
     }
     
     .section-toggle {
-      font-size: var(--section-toggle-font-size, 18px);
+      font-size: var(--section-toggle-font-size, 9px);
     }
     
     .section-content {
@@ -164,14 +164,10 @@ export default class SplitShippingModal extends LitElement {
     }
   }
 
-  private handleAddressesSelected(event: CustomEvent) {
-    this.dispatchEvent(event);
+  private handleAddressesSelected() {
     this.toggleAddressSection();
   }
 
-  private handleShippingAllocationSubmitted(event: CustomEvent) {
-    this.dispatchEvent(event);
-  }
 
   private hasShippingAddresses(): boolean {
     return !!(this.cart && 
@@ -217,7 +213,6 @@ export default class SplitShippingModal extends LitElement {
                     .cartItemId=${this.cartItemId}
                     .locale=${this.locale}
                     .addressQuantities=${this.addressQuantities}
-                    @shipping-allocation-submitted=${this.handleShippingAllocationSubmitted}
                   ></split-shipping-shipping-section>
                 </div>
               </div>

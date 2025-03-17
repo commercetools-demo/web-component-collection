@@ -6,7 +6,7 @@ export interface ShippingAddress extends Partial<CommercetoolsAddress> {
   id: string;
   country: string;
   quantity: number;
-  comment: string;
+  additionalAddressInfo: string;
 }
 
 export default class ShippingAddressItem extends LitElement {
@@ -20,18 +20,20 @@ export default class ShippingAddressItem extends LitElement {
     id: '',
     country: '',
     quantity: 0,
-    comment: ''
+    additionalAddressInfo: ''
   };
   
   maxQuantity: number = 0;
   locale: string = 'en-US';
 
   static styles = css`
-    .address-item {
+    .address-item-wrapper {
       border: var(--address-item-border, 1px solid #eee);
       border-radius: var(--address-item-border-radius, 4px);
       padding: var(--address-item-padding, 16px);
       margin-bottom: var(--address-item-margin-bottom, 12px);
+    }
+    .address-item {
       display: var(--address-item-display, flex);
       align-items: var(--address-item-align-items, center);
     }
@@ -96,6 +98,28 @@ export default class ShippingAddressItem extends LitElement {
     }));
   }
 
+  private handleCommentChange(e: Event) {
+    const target = e.target as HTMLInputElement;
+    const newComment = target.value || '';
+    
+    // Create a new address object with the updated comment
+    const updatedAddress = {
+      ...this.address,
+      additionalAddressInfo: newComment // Store in additionalAddressInfo as requested
+    };
+    
+    // Dispatch event to notify parent component
+    this.dispatchEvent(new CustomEvent('comment-changed', {
+      detail: {
+        addressKey: this.address.key,
+        additionalAddressInfo: newComment,
+        address: updatedAddress
+      },
+      bubbles: true,
+      composed: true
+    }));
+  }
+
   private formatAddress(address: ShippingAddress): string {
     const parts = [
       address.firstName,
@@ -113,9 +137,10 @@ export default class ShippingAddressItem extends LitElement {
 
   render() {
     return html`
+    <div class="address-item-wrapper">
       <div class="address-item">
         <div class="address-details">
-          <div class="address-line">${this.formatAddress(this.address)}</div>
+          <div class="address-line">${this.formatAddress(this.address)}</div>        
         </div>
         <div class="quantity-control">
           <label>Quantity:</label>
@@ -127,6 +152,18 @@ export default class ShippingAddressItem extends LitElement {
             .value=${this.address.quantity.toString()}
             @input=${this.handleQuantityChange}
           />
+        </div>
+      </div>
+      <div class="comment-section">
+        <label for="comment-${this.address.id}">Comment:</label>
+        <input 
+          type="text" 
+          id="comment-${this.address.id}"
+          class="comment-input"
+          .value=${this.address.additionalAddressInfo || ''}
+          placeholder="Add a comment for this address"
+          @input=${this.handleCommentChange}
+        />
         </div>
       </div>
     `;

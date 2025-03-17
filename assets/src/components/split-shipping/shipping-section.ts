@@ -132,7 +132,7 @@ export default class SplitShippingShippingSection extends LitElement {
             id: address.id || '', // Ensure id is always a string
             country: address.country, // Required by our interface
             quantity: quantity,
-            comment: '' // Default comment
+            additionalAddressInfo: address.additionalAddressInfo || '' // Ensure additionalAddressInfo is always a string
           };
         });
 
@@ -162,13 +162,13 @@ export default class SplitShippingShippingSection extends LitElement {
   }
 
   private handleCommentChanged(e: CustomEvent) {
-    const { addressKey, comment } = e.detail;
+    const { addressKey, additionalAddressInfo } = e.detail;
     
     // Find and update the address in our array
     const index = this.itemShippingAddresses.findIndex(addr => addr.key === addressKey);
     
     if (index !== -1) {
-      this.itemShippingAddresses[index].comment = comment;
+      this.itemShippingAddresses[index].additionalAddressInfo = additionalAddressInfo || '';
       this.requestUpdate();
     }
   }
@@ -189,28 +189,14 @@ export default class SplitShippingShippingSection extends LitElement {
       return;
     }
 
-    try {
-      // Get all addresses with their quantities
-      const allocatedAddresses = this.itemShippingAddresses.filter(addr => addr.quantity > 0);
-      const targets = allocatedAddresses.map(addr => ({
-        addressKey: addr.key,
-        quantity: addr.quantity
-      }));
-
-      // Dispatch event to notify that addresses have been allocated
-      this.dispatchEvent(new CustomEvent('shipping-allocation-submitted', {
-        detail: {
-          lineItemId: this.cartItemId,
-          targets: targets
-        },
-        bubbles: true,
-        composed: true
-      }));
-
-      // Show success message
-    } catch (error) {
-      console.error('Error submitting shipping allocation:', error);
-    }
+    this.dispatchEvent(new CustomEvent('shipping-allocation-submitted', {
+      detail: {
+        lineItemId: this.cartItemId,
+        itemShippingAddresses: this.itemShippingAddresses
+      },
+      bubbles: true,
+      composed: true
+    }));
   }
 
   render() {

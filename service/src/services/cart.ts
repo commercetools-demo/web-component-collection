@@ -16,6 +16,44 @@ export const updateCartItemAddresses = async (id: string, addresses: any[]) => {
         );
 
         // Filter out addresses that already exist in the cart
+        const updatedAddresses = addresses.filter(address => {
+            // If address has no key, include it
+            if (!address.key) {
+                return false;
+            }
+
+            // Skip addresses with keys that already exist in the cart
+            return existingAddressKeys.has(address.key);
+        });
+
+        // If no new addresses to add, return the cart as is
+        if (updatedAddresses.length === 0) {
+            return { body: cart };
+        }
+
+        return apiRoot.carts().withId({ ID: id }).post({
+            body: {
+                version: cart.version,
+                actions: updatedAddresses.map((address) => ({
+                    action: "updateItemShippingAddress",
+                    address: address
+                }))
+            }
+        }).execute();
+    });
+    return cart.body;
+};
+
+export const addCartItemAddresses = async (id: string, addresses: any[]) => {
+    const apiRoot = createApiRoot();
+
+    const cart = await getCartById(id).then((cart) => {
+        // Get existing address keys from the cart
+        const existingAddressKeys = new Set(
+            (cart.itemShippingAddresses || []).map(address => address.key)
+        );
+
+        // Filter out addresses that already exist in the cart
         const newAddresses = addresses.filter(address => {
             // If address has no key, include it
             if (!address.key) {
