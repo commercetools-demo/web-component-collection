@@ -388,6 +388,30 @@ export default class SplitShippingAddressSection extends LitElement {
     }
   }
 
+  private getComponentPath(): string {
+    try {
+      
+      // Fallback 1: Look for the component's script tag
+      const scripts = document.getElementsByTagName('script');
+      for (let i = 0; i < scripts.length; i++) {
+        const src = scripts[i].src;
+        if (src && (src.includes('components.js') || src.includes('address-section'))) {
+          // Get the directory of the script
+          const baseUrl = src.substring(0, src.lastIndexOf('/') + 1);
+          return `${baseUrl}template.csv`;
+        }
+      }
+      
+      // Fallback 2: Use the current document URL
+      const baseUrl = new URL('./', window.location.href).href;
+      return `${baseUrl}template.csv`;
+    } catch (e) {
+      console.warn('Failed to determine component path:', e);
+      // Ultimate fallback - just use a relative path
+      return 'template.csv';
+    }
+  }
+
   render() {
     return html`
       <div class="address-section">
@@ -410,7 +434,7 @@ export default class SplitShippingAddressSection extends LitElement {
           <button class="browse-button">Browse Files</button>
         </div>
         
-        <a href="/src/static/template.csv" download class="template-link">Download Template</a>
+        <a href="${this.getComponentPath()}" download class="template-link">Download Template</a>
         
         ${this.fileName ? html`
           <div class="file-info">

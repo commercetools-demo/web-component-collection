@@ -16,8 +16,9 @@ export default defineConfig({
       output: {
         assetFileNames: 'assets/[name][extname]'
       }
-    }
+    },
+    copyPublicDir: true
   },
-  publicDir: resolve(__dirname, 'static'),
+  publicDir: resolve(__dirname, 'src/static'),
   envPrefix: 'CTP_',
 });
