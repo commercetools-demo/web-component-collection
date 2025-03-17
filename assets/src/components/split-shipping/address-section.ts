@@ -1,6 +1,6 @@
 import type { Cart } from '@commercetools/platform-sdk';
 import { LitElement, html, css } from 'lit';
-
+import './address-table';
 // Define our own Address interface to avoid read-only properties
 interface AddressData {
   id?: string;
@@ -168,6 +168,14 @@ export default class SplitShippingAddressSection extends LitElement {
       margin-top: var(--button-container-margin-top, 24px);
       display: var(--button-container-display, flex);
       justify-content: var(--button-container-justify-content, flex-end);
+    }
+
+    .template-link {
+      display: inline-block;
+      margin-top: 10px;
+      margin-bottom: 20px;
+      color: var(--template-link-color, #3f51b5);
+      text-decoration: underline;
     }
   `;
 
@@ -353,7 +361,7 @@ export default class SplitShippingAddressSection extends LitElement {
     if (this.csvData.length === 0 || !this.cartItemId) {
       // display error
       this.hasError = true;
-      this.errorMessage = 'Please upload a valid CSV file first';
+      this.errorMessage = 'Please upload a valid CSV file or add addresses manually first';
       return;
     }
 
@@ -448,36 +456,11 @@ export default class SplitShippingAddressSection extends LitElement {
           </div>
         ` : ''}
         
-        ${this.csvData.length > 0 ? html`
-          <h4>Parsed Address Data</h4>
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>First Name</th>
-                <th>Last Name</th>
-                <th>Street Number</th>
-                <th>Street Name</th>
-                <th>City</th>
-                <th>State</th>
-                <th>Zip Code</th>
-                <th>Quantity</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${this.csvData.map(row => html`
-                <tr>
-                  <td>${row.firstName}</td>
-                  <td>${row.lastName}</td>
-                  <td>${row.streetNumber}</td>
-                  <td>${row.streetName}</td>
-                  <td>${row.city}</td>
-                  <td>${row.state}</td>
-                  <td>${row.zipCode}</td>
-                  <td>${row.quantity}</td>
-                </tr>
-              `)}
-            </tbody>
-          </table>
+          <h4>Shipping Addresses</h4>
+          <address-table 
+            .addresses=${this.csvData}
+            @addresses-updated=${(e: CustomEvent) => { this.csvData = e.detail.addresses; }}
+          ></address-table>
           
           <div class="button-container">
             <button 
@@ -487,7 +470,6 @@ export default class SplitShippingAddressSection extends LitElement {
               Add addresses to your cart
             </button>
           </div>
-        ` : ''}
       </div>
     `;
   }
