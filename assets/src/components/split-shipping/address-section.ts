@@ -144,6 +144,31 @@ export default class SplitShippingAddressSection extends LitElement {
       background-color: var(--submit-button-disabled-background-color, #cccccc);
       cursor: var(--submit-button-disabled-cursor, not-allowed);
     }
+
+    button {
+      background-color: var(--button-background-color, #3f51b5);
+      color: var(--button-color, white);
+      border: var(--button-border, none);
+      padding: var(--button-padding, 8px 16px);
+      border-radius: var(--button-border-radius, 4px);
+      cursor: var(--button-cursor, pointer);
+      font-size: var(--button-font-size, 14px);
+    }
+    
+    button:hover {
+      background-color: var(--button-hover-background-color, #303f9f);
+    }
+    
+    button:disabled {
+      background-color: var(--button-disabled-background-color, #cccccc);
+      cursor: var(--button-disabled-cursor, not-allowed);
+    }
+    
+    .button-container {
+      margin-top: var(--button-container-margin-top, 24px);
+      display: var(--button-container-display, flex);
+      justify-content: var(--button-container-justify-content, flex-end);
+    }
   `;
 
   constructor() {
@@ -433,7 +458,6 @@ export default class SplitShippingAddressSection extends LitElement {
           <div class="button-container">
             <button 
               id="address-submit"
-              class="submit-button"
               @click=${this.submitAddressData}
             >
               Add addresses to your cart

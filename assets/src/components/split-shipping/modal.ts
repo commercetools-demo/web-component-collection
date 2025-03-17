@@ -1,10 +1,16 @@
 import type { Cart } from '@commercetools/platform-sdk';
 import { LitElement, html, css } from 'lit';
 import { classMap } from 'lit/directives/class-map.js';
+import './address-section';
+import './shipping-section';
 
 export default class SplitShippingModal extends LitElement {
   static properties = {
-    cart: { type: Object },
+    cart: { type: Object, hasChanged(newVal: Cart, oldVal: Cart) {
+      console.log('cart has changed', newVal, oldVal);
+      // Custom hasChanged to detect deep changes in the cart object
+      return JSON.stringify(newVal) !== JSON.stringify(oldVal);
+    }},
     cartItemId: { type: String, attribute: 'cart-item-id' },
     locale: { type: String },
     addressQuantities: { type: Object }
@@ -104,6 +110,15 @@ export default class SplitShippingModal extends LitElement {
     .hidden {
       display: none;
     }
+
+    .info-message {
+      padding: var(--info-message-padding, 16px);
+      background-color: var(--info-message-background-color, #e3f2fd);
+      border-radius: var(--info-message-border-radius, 4px);
+      color: var(--info-message-color, #0d47a1);
+      margin-bottom: var(--info-message-margin-bottom, 16px);
+      text-align: var(--info-message-text-align, center);
+    }
   `;
 
   connectedCallback() {
@@ -114,6 +129,14 @@ export default class SplitShippingModal extends LitElement {
   disconnectedCallback() {
     super.disconnectedCallback();
     document.body.style.overflow = ''; // Restore scrolling when modal is removed
+  }
+
+  updated(changedProperties: Map<string, any>) {
+    console.log('changedProperties', changedProperties);
+    if (changedProperties.has('cart')) {
+      // When cart changes, notify child components by forcing an update
+      this.requestUpdate();
+    }
   }
 
   close() {
@@ -150,6 +173,13 @@ export default class SplitShippingModal extends LitElement {
     this.dispatchEvent(event);
   }
 
+  private hasShippingAddresses(): boolean {
+    return !!(this.cart && 
+              this.cart.itemShippingAddresses && 
+              Array.isArray(this.cart.itemShippingAddresses) && 
+              this.cart.itemShippingAddresses.length > 0);
+  }
+
   render() {
     return html`
       <div class="modal-backdrop" @click=${this.handleBackdropClick}>
@@ -175,21 +205,27 @@ export default class SplitShippingModal extends LitElement {
               </div>
             </div>
             
-            <div class="section">
-              <div class="section-header" @click=${this.toggleShippingSection}>
-                <h3 class="section-title">Shipping</h3>
-                <span class="section-toggle">${this.shippingSectionExpanded ? '▼' : '▶'}</span>
+            ${this.hasShippingAddresses() ? html`
+              <div class="section">
+                <div class="section-header" @click=${this.toggleShippingSection}>
+                  <h3 class="section-title">Shipping</h3>
+                  <span class="section-toggle">${this.shippingSectionExpanded ? '▼' : '▶'}</span>
+                </div>
+                <div class=${classMap({ 'section-content': true, 'hidden': !this.shippingSectionExpanded })}>
+                  <split-shipping-shipping-section 
+                    .cart=${this.cart}
+                    .cartItemId=${this.cartItemId}
+                    .locale=${this.locale}
+                    .addressQuantities=${this.addressQuantities}
+                    @shipping-allocation-submitted=${this.handleShippingAllocationSubmitted}
+                  ></split-shipping-shipping-section>
+                </div>
               </div>
-              <div class=${classMap({ 'section-content': true, 'hidden': !this.shippingSectionExpanded })}>
-                <split-shipping-shipping-section 
-                  .cart=${this.cart}
-                  .cartItemId=${this.cartItemId}
-                  .locale=${this.locale}
-                  .addressQuantities=${this.addressQuantities}
-                  @shipping-allocation-submitted=${this.handleShippingAllocationSubmitted}
-                ></split-shipping-shipping-section>
+            ` : html`
+              <div class="info-message">
+                Please add shipping addresses in the address section first before proceeding to shipping allocation.
               </div>
-            </div>
+            `}
           </div>
         </div>
       </div>

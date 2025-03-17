@@ -1,5 +1,6 @@
 import type { Cart } from '@commercetools/platform-sdk';
 import { LitElement, html, css } from 'lit';
+import { state } from 'lit/decorators.js';
 
 export default class SplitShipping extends LitElement {
   static properties = {
@@ -18,6 +19,7 @@ export default class SplitShipping extends LitElement {
   isOpen: boolean = false;
   addressQuantities: Record<string, number> = {};
   
+  @state()
   private cart: Cart | null = null;
 
   static styles = css`
