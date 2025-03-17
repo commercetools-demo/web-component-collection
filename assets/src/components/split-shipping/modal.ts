@@ -7,11 +7,13 @@ export default class SplitShippingModal extends LitElement {
     cart: { type: Object },
     cartItemId: { type: String, attribute: 'cart-item-id' },
     locale: { type: String },
+    addressQuantities: { type: Object }
   };
 
   cart: Cart | null = null;
   cartItemId: string = '';
   locale: string = 'en-US';
+  addressQuantities: Record<string, number> = {};
   
   private addressSectionExpanded: boolean = true;
   private shippingSectionExpanded: boolean = true;
@@ -183,6 +185,7 @@ export default class SplitShippingModal extends LitElement {
                   .cart=${this.cart}
                   .cartItemId=${this.cartItemId}
                   .locale=${this.locale}
+                  .addressQuantities=${this.addressQuantities}
                   @shipping-allocation-submitted=${this.handleShippingAllocationSubmitted}
                 ></split-shipping-shipping-section>
               </div>

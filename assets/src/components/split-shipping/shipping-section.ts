@@ -8,13 +8,15 @@ export default class SplitShippingShippingSection extends LitElement {
     cart: { type: Object },
     cartItemId: { type: String, attribute: 'cart-item-id' },
     locale: { type: String },
-    addresses: { type: Array }
+    addresses: { type: Array },
+    addressQuantities: { type: Object }
   };
 
   cart: Cart | null = null;
   cartItemId: string = '';
   locale: string = 'en-US';
   addresses: ShippingAddress[] = [];
+  addressQuantities: Record<string, number> = {};
   
   private currentLineItem: LineItem | null = null;
   private isLoading: boolean = false;
@@ -93,7 +95,7 @@ export default class SplitShippingShippingSection extends LitElement {
   }
 
   updated(changedProperties: Map<string, any>) {
-    if (changedProperties.has('cart') || changedProperties.has('cartItemId') || changedProperties.has('addresses')) {
+    if (changedProperties.has('cart') || changedProperties.has('cartItemId') || changedProperties.has('addresses') || changedProperties.has('addressQuantities')) {
       this.loadLineItemAndAddresses();
     }
   }
@@ -114,13 +116,25 @@ export default class SplitShippingShippingSection extends LitElement {
 
       // Map cart.itemShippingAddresses to our ShippingAddress type
       this.itemShippingAddresses = (this.cart.itemShippingAddresses || [])
-        .map(address => ({
-          ...address,
-          id: address.id || '', // Ensure id is always a string
-          country: address.country, // Required by our interface
-          quantity: this.currentLineItem?.shippingDetails?.targets.find(target => target.addressKey === address.key)?.quantity || 0,
-          comment: '' // Default comment
-        }));
+        .map(address => {
+          // First try to get quantity from shippingDetails targets
+          let quantity = this.currentLineItem?.shippingDetails?.targets.find(
+            target => target.addressKey === address.key
+          )?.quantity || 0;
+          
+          // If quantity is 0, try to get it from combinedAddressQuantities using the address key
+          if (quantity === 0 && address.key && this.addressQuantities[address.key] !== undefined) {
+            quantity = this.addressQuantities[address.key];
+          }
+          
+          return {
+            ...address,
+            id: address.id || '', // Ensure id is always a string
+            country: address.country, // Required by our interface
+            quantity: quantity,
+            comment: '' // Default comment
+          };
+        });
 
       // If no addresses yet, initialize with empty array
       if (this.itemShippingAddresses.length === 0) {

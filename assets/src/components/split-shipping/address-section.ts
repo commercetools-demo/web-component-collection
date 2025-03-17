@@ -433,6 +433,7 @@ export default class SplitShippingAddressSection extends LitElement {
           <div class="button-container">
             <button 
               id="address-submit"
+              class="submit-button"
               @click=${this.submitAddressData}
             >
               Add addresses to your cart

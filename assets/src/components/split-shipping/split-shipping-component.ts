@@ -7,7 +7,8 @@ export default class SplitShipping extends LitElement {
     locale: { type: String },
     cartId: { type: String, attribute: 'cart-id' },
     cartItemId: { type: String, attribute: 'cart-item-id' },
-    isOpen: { type: Boolean, state: true }
+    isOpen: { type: Boolean, state: true },
+    addressQuantities: { type: Object, state: true }
   };
 
   baseUrl: string = '';
@@ -15,6 +16,7 @@ export default class SplitShipping extends LitElement {
   cartId: string = '';
   cartItemId: string = '';
   isOpen: boolean = false;
+  addressQuantities: Record<string, number> = {};
   
   private cart: Cart | null = null;
 
@@ -87,6 +89,13 @@ export default class SplitShipping extends LitElement {
         return;
       }
 
+      // Store the quantities from addresses to use them later
+      this.addressQuantities = addresses.reduce((acc, address) => {
+        if (address.key && address.quantity !== undefined) {
+          acc[address.key] = address.quantity;
+        }
+        return acc;
+      }, {} as Record<string, number>);
 
       const response = await fetch(`${this.baseUrl}/carts/${this.cartId}/add-item-shipping-addresses`, {
         method: 'POST',
@@ -147,6 +156,7 @@ export default class SplitShipping extends LitElement {
           .locale=${this.locale}
           .cart=${this.cart}
           .cartItemId=${this.cartItemId}
+          .addressQuantities=${this.addressQuantities}
           @close=${this.closeModal}
           @addresses-selected=${this.handleAddressesSelected}
           @shipping-allocation-submitted=${this.handleShippingAllocationSubmitted}
