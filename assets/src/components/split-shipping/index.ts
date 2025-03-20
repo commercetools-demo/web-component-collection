@@ -131,10 +131,6 @@ export default class SplitShipping extends LitElement {
       return;
     }
 
-
-
-    /////
-
     const itemShippingAddresses: ShippingAddress[] = event.detail.itemShippingAddresses;
 
     try {
@@ -166,12 +162,13 @@ export default class SplitShipping extends LitElement {
         await this.updateCartAddresses(addressesWithChangedComments);
       }
 
+      // show success message
+      alert('Shipping allocation submitted successfully. You can now close the modal.');
+
       // Show success message
     } catch (error) {
       console.error('Error submitting shipping allocation:', error);
     }
-
-
   }
 
   private async updateCartTargets(targets: any[]) {

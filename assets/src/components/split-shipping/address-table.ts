@@ -1,4 +1,5 @@
 import { LitElement, html, css } from 'lit';
+import { state } from 'lit/decorators.js';
 
 // Define CSV row data interface
 interface CsvRowData {
@@ -21,8 +22,14 @@ export default class AddressTable extends LitElement {
 
   addresses: CsvRowData[] = [];
   editable: boolean = true;
+
+  @state()
+  errorMessage: string = '';
   
   static styles = css`
+    .error-message {
+      color: red;
+    }
     .data-table {
       width: 100%;
       border-collapse: collapse;
@@ -88,10 +95,31 @@ export default class AddressTable extends LitElement {
     .add-row-button:hover {
       background-color: var(--add-row-button-hover-bg, #303f9f);
     }
+
+    .remove-row-button {
+      background-color: var(--remove-row-button-bg, #f44336);
+      color: var(--remove-row-button-color, white);
+      border: none;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .remove-row-button:hover {
+      background-color: var(--remove-row-button-hover-bg, #d32f2f);
+    }
   `;
 
   constructor() {
     super();
+  }
+
+  validateAddress(address: CsvRowData): boolean {
+    if (address.firstName === '' || address.lastName === '' || address.streetNumber === '' || address.streetName === '' || address.city === '' || address.state === '' || address.zipCode === '' || address.country === '') {
+      return false;
+    }
+    return true;
   }
 
   // Method to add a new row to the addresses array
@@ -118,13 +146,37 @@ export default class AddressTable extends LitElement {
       if (field === 'quantity') {
         newAddress[field] = parseInt(input.value) || 1;
       } else {
-        // @ts-ignore - TypeScript doesn't know that we're assigning a string to a string property
         newAddress[field] = input.value;
       }
     });
-    
-    // Add the new address and notify parent
-    const updatedAddresses = [...this.addresses, newAddress];
+    if (this.validateAddress(newAddress)) {
+      this.errorMessage = '';
+      // Add the new address and notify parent
+      const updatedAddresses = [...this.addresses, newAddress];
+      this.addresses = updatedAddresses;
+      
+      // Dispatch event to notify parent of address change
+      this.dispatchEvent(new CustomEvent('addresses-updated', {
+        detail: {
+          addresses: this.addresses
+        },
+        bubbles: true,
+        composed: true
+      }));
+      
+      // Clear the form
+      formElements.forEach(input => {
+        input.value = '';
+      });
+    } else {
+      this.errorMessage = 'Invalid address';
+    }
+  }
+
+  // Method to remove a row from the addresses array
+  private removeRow(index: number) {
+    // Create a new array without the item at the specified index
+    const updatedAddresses = [...this.addresses.slice(0, index), ...this.addresses.slice(index + 1)];
     this.addresses = updatedAddresses;
     
     // Dispatch event to notify parent of address change
@@ -135,11 +187,6 @@ export default class AddressTable extends LitElement {
       bubbles: true,
       composed: true
     }));
-    
-    // Clear the form
-    formElements.forEach(input => {
-      input.value = '';
-    });
   }
 
   render() {
@@ -157,10 +204,11 @@ export default class AddressTable extends LitElement {
               <th>Zip Code</th>
               <th>Country</th>
               <th>Quantity</th>
+              ${this.editable ? html`<th></th>` : ''}
             </tr>
           </thead>
           <tbody>
-            ${this.addresses.map(row => html`
+            ${this.addresses.map((row, index) => html`
               <tr>
                 <td>${row.firstName}</td>
                 <td>${row.lastName}</td>
@@ -171,6 +219,13 @@ export default class AddressTable extends LitElement {
                 <td>${row.zipCode}</td>
                 <td>${row.country}</td>
                 <td>${row.quantity}</td>
+                ${this.editable ? html`
+                  <td>
+                    <button class="remove-row-button" @click=${() => this.removeRow(index)}>
+                      X
+                    </button>
+                  </td>
+                ` : ''}
               </tr>
             `)}
           </tbody>
@@ -194,6 +249,7 @@ export default class AddressTable extends LitElement {
                 Add Row
               </button>
             </div>
+            <p class="error-message">${this.errorMessage}</p>
           </div>
         ` : ''}
       </div>
