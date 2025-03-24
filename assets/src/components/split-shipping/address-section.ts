@@ -248,29 +248,32 @@ export default class SplitShippingAddressSection extends LitElement {
   }
 
   private processFile(file: File) {
-    // Check if file is CSV
-    if (!file.name.endsWith('.csv')) {
-      this.hasError = true;
-      this.errorMessage = 'Please select a CSV file';
-      this.requestUpdate();
-      return;
-    }
-
     this.fileName = file.name;
     this.hasError = false;
     this.errorMessage = '';
     
     const reader = new FileReader();
+    
     reader.onload = (e) => {
       try {
-        const csvContent = e.target?.result as string;
-        this.parseCsvData(csvContent);
+        const content = e.target?.result as string;
+        this.csvData = this.parseCSV(content);
+        
+        // Dispatch csv-parsed event with the addresses data
+        this.dispatchEvent(new CustomEvent('csv-parsed', {
+          detail: {
+            addresses: this.csvData
+          },
+          bubbles: true,
+          composed: true
+        }));
+        
+        this.requestUpdate();
       } catch (error) {
-        console.error('Error reading CSV file:', error);
         this.hasError = true;
-        this.errorMessage = 'Failed to read CSV file';
+        this.errorMessage = error instanceof Error ? error.message : 'Failed to parse CSV file';
+        this.requestUpdate();
       }
-      this.requestUpdate();
     };
     
     reader.onerror = () => {
@@ -282,7 +285,7 @@ export default class SplitShippingAddressSection extends LitElement {
     reader.readAsText(file);
   }
 
-  private parseCsvData(csvContent: string) {
+  private parseCSV(csvContent: string): CsvRowData[] {
     try {
       // Split by lines and remove empty lines
       const lines = csvContent.split(/\r?\n/).filter(line => line.trim() !== '');
@@ -331,6 +334,7 @@ export default class SplitShippingAddressSection extends LitElement {
       this.errorMessage = error instanceof Error ? error.message : 'Failed to parse CSV data';
       this.csvData = [];
     }
+    return this.csvData;
   }
 
   // Helper function to properly parse CSV lines with quoted values
@@ -358,41 +362,40 @@ export default class SplitShippingAddressSection extends LitElement {
   }
 
   private submitAddressData() {
-    if (this.csvData.length === 0 || !this.cartItemId) {
-      // display error
+    if (this.csvData.length === 0) {
       this.hasError = true;
-      this.errorMessage = 'Please upload a valid CSV file or add addresses manually first';
+      this.errorMessage = 'No address data to submit';
       return;
     }
-
+    
     try {
-      // Convert CSV data to address data format
-      const addresses: AddressData[] = this.csvData.map((row) => ({
-        key: `csv-${row.firstName}-${row.lastName}`,
-        country: row.country,
-        firstName: row.firstName,
-        lastName: row.lastName,
-        streetName: row.streetName,
-        streetNumber: row.streetNumber,
-        city: row.city,
-        state: row.state,
-        postalCode: row.zipCode,
-        quantity: row.quantity
-      }));
-
-      // Dispatch event to notify that addresses have been selected
-      this.dispatchEvent(new CustomEvent('addresses-selected', {
+      // Map CSV data to address objects
+      const addresses = this.csvData.map(row => {
+        return {
+          firstName: row.firstName,
+          lastName: row.lastName,
+          streetName: row.streetName,
+          streetNumber: row.streetNumber,
+          city: row.city,
+          state: row.state,
+          postalCode: row.zipCode,
+          country: row.country,
+          quantity: row.quantity
+        };
+      });
+      
+      // Dispatch csv-parsed event again (in case submit button is clicked)
+      this.dispatchEvent(new CustomEvent('csv-parsed', {
         detail: {
-          cartItemId: this.cartItemId,
           addresses: addresses
         },
         bubbles: true,
         composed: true
       }));
-
-      // Show success message
+      
     } catch (error) {
-      console.error('Error submitting address data:', error);
+      this.hasError = true;
+      this.errorMessage = error instanceof Error ? error.message : 'Failed to submit address data';
     }
   }
 
@@ -455,21 +458,6 @@ export default class SplitShippingAddressSection extends LitElement {
             ${this.errorMessage}
           </div>
         ` : ''}
-        
-          <h4>Shipping Addresses</h4>
-          <address-table 
-            .addresses=${this.csvData}
-            @addresses-updated=${(e: CustomEvent) => { this.csvData = e.detail.addresses; }}
-          ></address-table>
-          
-          <div class="button-container">
-            <button 
-              id="address-submit"
-              @click=${this.submitAddressData}
-            >
-              Add addresses to your cart
-            </button>
-          </div>
       </div>
     `;
   }

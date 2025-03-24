@@ -17,11 +17,15 @@ interface CsvRowData {
 export default class AddressTable extends LitElement {
   static properties = {
     addresses: { type: Array },
-    editable: { type: Boolean }
+    editable: { type: Boolean },
+    cartItemId: { type: String, attribute: 'cart-item-id' },
+    locale: { type: String }
   };
 
   addresses: CsvRowData[] = [];
   editable: boolean = true;
+  cartItemId: string = '';
+  locale: string = 'en-US';
 
   @state()
   errorMessage: string = '';
@@ -29,6 +33,10 @@ export default class AddressTable extends LitElement {
   static styles = css`
     .error-message {
       color: red;
+      margin-bottom: 10px;
+      padding: 8px;
+      background-color: rgba(255, 0, 0, 0.1);
+      border-radius: 4px;
     }
     .data-table {
       width: 100%;
@@ -109,6 +117,31 @@ export default class AddressTable extends LitElement {
     .remove-row-button:hover {
       background-color: var(--remove-row-button-hover-bg, #d32f2f);
     }
+    
+    .submit-button-container {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 20px;
+    }
+    
+    .submit-button {
+      background-color: var(--submit-button-bg, #4caf50);
+      color: var(--submit-button-color, white);
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    
+    .submit-button:hover {
+      background-color: var(--submit-button-hover-bg, #388e3c);
+    }
+    
+    .submit-button:disabled {
+      background-color: var(--submit-button-disabled-bg, #cccccc);
+      cursor: not-allowed;
+    }
   `;
 
   constructor() {
@@ -169,7 +202,7 @@ export default class AddressTable extends LitElement {
         input.value = '';
       });
     } else {
-      this.errorMessage = 'Invalid address';
+      this.errorMessage = 'Please fill all address fields';
     }
   }
 
@@ -188,10 +221,46 @@ export default class AddressTable extends LitElement {
       composed: true
     }));
   }
+  
+  // Method to submit addresses and proceed to shipping step
+  private submitAddresses() {
+    if (this.addresses.length === 0) {
+      this.errorMessage = 'Please add at least one address';
+      return;
+    }
+    
+    // Convert addresses to the format expected by the parent component
+    const formattedAddresses = this.addresses.map((address, index) => {
+      return {
+        key: `csv-${address.firstName}-${address.lastName}-${index}`,
+        country: address.country,
+        firstName: address.firstName,
+        lastName: address.lastName,
+        streetName: address.streetName,
+        streetNumber: address.streetNumber,
+        city: address.city,
+        state: address.state,
+        postalCode: address.zipCode,
+        quantity: address.quantity
+      };
+    });
+    
+    // Dispatch event to notify parent that addresses are ready
+    this.dispatchEvent(new CustomEvent('address-table-submit', {
+      detail: {
+        cartItemId: this.cartItemId,
+        addresses: formattedAddresses
+      },
+      bubbles: true,
+      composed: true
+    }));
+  }
 
   render() {
     return html`
       <div>
+        ${this.errorMessage ? html`<div class="error-message">${this.errorMessage}</div>` : ''}
+        
         <table class="data-table">
           <thead>
             <tr>
@@ -249,12 +318,21 @@ export default class AddressTable extends LitElement {
                 Add Row
               </button>
             </div>
-            <p class="error-message">${this.errorMessage}</p>
           </div>
         ` : ''}
+        
+        <div class="submit-button-container">
+          <button 
+            class="submit-button" 
+            @click=${this.submitAddresses}
+            ?disabled=${this.addresses.length === 0}
+          >
+            Review & Submit Addresses
+          </button>
+        </div>
       </div>
     `;
   }
 }
 
-customElements.define('address-table', AddressTable); 
+customElements.define('split-shipping-address-table', AddressTable); 

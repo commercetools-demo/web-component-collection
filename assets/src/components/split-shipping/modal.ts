@@ -3,11 +3,13 @@ import { LitElement, html, css } from 'lit';
 import { classMap } from 'lit/directives/class-map.js';
 import './address-section';
 import './shipping-section';
+import './address-table';
 
 // Enum for wizard steps
 enum WizardStep {
-  ADDRESS = 0,
-  SHIPPING = 1
+  CSV_UPLOAD = 0,
+  ADDRESS_TABLE = 1,
+  SHIPPING = 2
 }
 
 export default class SplitShippingModal extends LitElement {
@@ -19,14 +21,16 @@ export default class SplitShippingModal extends LitElement {
     cartItemId: { type: String, attribute: 'cart-item-id' },
     locale: { type: String },
     addressQuantities: { type: Object },
-    currentStep: { type: Number, state: true }
+    currentStep: { type: Number, state: true },
+    csvAddresses: { type: Array, state: true }
   };
 
   cart: Cart | null = null;
   cartItemId: string = '';
   locale: string = 'en-US';
   addressQuantities: Record<string, number> = {};
-  currentStep: WizardStep = WizardStep.ADDRESS;
+  currentStep: WizardStep = WizardStep.CSV_UPLOAD;
+  csvAddresses: any[] = [];
 
   static styles = css`
     .modal-backdrop {
@@ -176,7 +180,7 @@ export default class SplitShippingModal extends LitElement {
     if (this.hasShippingAddresses()) {
       this.currentStep = WizardStep.SHIPPING;
     } else {
-      this.currentStep = WizardStep.ADDRESS;
+      this.currentStep = WizardStep.CSV_UPLOAD;
     }
   }
 
@@ -195,8 +199,23 @@ export default class SplitShippingModal extends LitElement {
     }
   }
 
-  private handleAddressesSelected(e: CustomEvent) {
-  
+  private handleCsvParsed(e: CustomEvent) {
+    // Store the parsed CSV addresses
+    this.csvAddresses = e.detail.addresses || [];
+    
+    // Automatically move to address table step
+    this.goToStep(WizardStep.ADDRESS_TABLE);
+  }
+
+  private handleAddressTableSubmit(e: CustomEvent) {
+    // Handle address table submission
+    this.dispatchEvent(new CustomEvent('addresses-selected', {
+      detail: e.detail,
+      bubbles: true,
+      composed: true
+    }));
+    
+    // Move to shipping step
     this.goToStep(WizardStep.SHIPPING);
   }
 
@@ -211,7 +230,9 @@ export default class SplitShippingModal extends LitElement {
   }
 
   private goToNextStep() {
-    this.currentStep++;
+    if (this.currentStep < WizardStep.SHIPPING) {
+      this.currentStep++;
+    }
   }
 
   private hasShippingAddresses(): boolean {
@@ -223,14 +244,23 @@ export default class SplitShippingModal extends LitElement {
 
   private renderWizardStep() {
     switch (this.currentStep) {
-      case WizardStep.ADDRESS:
+      case WizardStep.CSV_UPLOAD:
         return html`
           <split-shipping-address-section 
             .cart=${this.cart}
             .cartItemId=${this.cartItemId}
             .locale=${this.locale}
-            @addresses-selected=${this.handleAddressesSelected}
+            @csv-parsed=${this.handleCsvParsed}
           ></split-shipping-address-section>
+        `;
+      case WizardStep.ADDRESS_TABLE:
+        return html`
+          <split-shipping-address-table
+            .addresses=${this.csvAddresses}
+            .cartItemId=${this.cartItemId}
+            .locale=${this.locale}
+            @address-table-submit=${this.handleAddressTableSubmit}
+          ></split-shipping-address-table>
         `;
       case WizardStep.SHIPPING:
         return html`
@@ -246,6 +276,19 @@ export default class SplitShippingModal extends LitElement {
     }
   }
 
+  private getStepTitle(step: WizardStep): string {
+    switch (step) {
+      case WizardStep.CSV_UPLOAD:
+        return "1. Upload CSV";
+      case WizardStep.ADDRESS_TABLE:
+        return "2. Review Addresses";
+      case WizardStep.SHIPPING:
+        return "3. Allocate Shipping";
+      default:
+        return "";
+    }
+  }
+
   render() {
     return html`
       <div class="modal-backdrop" @click=${this.handleBackdropClick}>
@@ -258,16 +301,22 @@ export default class SplitShippingModal extends LitElement {
           <div class="modal-body">
             <div class="wizard-steps">
               <div 
-                class=${classMap({ 'wizard-step': true, 'active': this.currentStep === WizardStep.ADDRESS })}
-                @click=${() => this.goToStep(WizardStep.ADDRESS)}
+                class=${classMap({ 'wizard-step': true, 'active': this.currentStep === WizardStep.CSV_UPLOAD })}
+                @click=${() => this.goToStep(WizardStep.CSV_UPLOAD)}
               >
-                1. Select Addresses
+                ${this.getStepTitle(WizardStep.CSV_UPLOAD)}
+              </div>
+              <div 
+                class=${classMap({ 'wizard-step': true, 'active': this.currentStep === WizardStep.ADDRESS_TABLE })}
+                @click=${() => this.csvAddresses.length > 0 && this.goToStep(WizardStep.ADDRESS_TABLE)}
+              >
+                ${this.getStepTitle(WizardStep.ADDRESS_TABLE)}
               </div>
               <div 
                 class=${classMap({ 'wizard-step': true, 'active': this.currentStep === WizardStep.SHIPPING })}
-                @click=${() => this.goToStep(WizardStep.SHIPPING)}
+                @click=${() => this.hasShippingAddresses() && this.goToStep(WizardStep.SHIPPING)}
               >
-                2. Allocate Shipping
+                ${this.getStepTitle(WizardStep.SHIPPING)}
               </div>
             </div>
             
@@ -282,7 +331,11 @@ export default class SplitShippingModal extends LitElement {
                 </button>
               ` : html`<div></div>`}
               
-              ${this.currentStep === WizardStep.ADDRESS ? html`
+              ${this.currentStep === WizardStep.CSV_UPLOAD ? html`
+                <button class="wizard-button next" @click=${this.goToNextStep} ?disabled=${this.csvAddresses.length === 0}>
+                  Next
+                </button>
+              ` : this.currentStep === WizardStep.ADDRESS_TABLE ? html`
                 <button class="wizard-button next" @click=${this.goToNextStep}>
                   Next
                 </button>
