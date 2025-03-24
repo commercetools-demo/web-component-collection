@@ -9,9 +9,6 @@ interface MapMovedEvent extends CustomEvent {
   detail: { lat: number; lng: number };
 }
 
-interface MarkerSelectedEvent extends CustomEvent {
-  detail: Store;
-}
 
 interface StoreSelectedEvent extends CustomEvent {
   detail: Store;
