@@ -179,13 +179,6 @@ export default class StoresMap extends HTMLElement {
       await this.debouncedLoadStores(lat, lng);
     }) as EventListener);
 
-    googleMap?.addEventListener('markerSelected', ((e: Event) => {
-      const customEvent = e as MarkerSelectedEvent;
-      const store = customEvent.detail;
-      if (storesList instanceof HTMLElement) {
-        (storesList as any).setSelectedStoreId(store.storeId);
-      }
-    }) as EventListener);
 
     storesList?.addEventListener('storeSelected', ((e: Event) => {
       const customEvent = e as StoreSelectedEvent;
