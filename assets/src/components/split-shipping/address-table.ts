@@ -12,6 +12,7 @@ interface CsvRowData {
   zipCode: string;
   country: string;
   quantity: number;
+  key?: string; // Optional key for addresses coming from cart
 }
 
 export default class AddressTable extends LitElement {
@@ -127,7 +128,7 @@ export default class AddressTable extends LitElement {
     }
     
     .submit-button {
-      background-color: var(--submit-button-bg, #4caf50);
+      background-color: var(--submit-button-bg, #303f9f);
       color: var(--submit-button-color, white);
       border: none;
       padding: 10px 20px;
@@ -233,7 +234,7 @@ export default class AddressTable extends LitElement {
   }
   
   // Method to submit addresses and proceed to shipping step
-  private submitAddresses() {
+  submitAddresses() {
     if (this.addresses.length === 0) {
       this.errorMessage = 'Please add at least one address';
       return;
@@ -242,7 +243,8 @@ export default class AddressTable extends LitElement {
     // Convert addresses to the format expected by the parent component
     const formattedAddresses = this.addresses.map((address, index) => {
       return {
-        key: `csv-${address.firstName}-${address.lastName}-${index}`,
+        // Use existing key if available, otherwise generate a new one
+        key: address.key || `csv-${address.firstName}-${address.lastName}-${index}`,
         country: address.country,
         firstName: address.firstName,
         lastName: address.lastName,

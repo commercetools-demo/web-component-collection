@@ -245,6 +245,46 @@ export default class SplitShippingModal extends LitElement {
               this.cart.itemShippingAddresses.length > 0);
   }
 
+  private getCombinedAddresses() {
+    // Start with CSV addresses
+    const addresses = [...this.csvAddresses];
+    
+    // Add cart item shipping addresses if they exist
+    if (this.cart && this.cart.itemShippingAddresses && Array.isArray(this.cart.itemShippingAddresses)) {
+      const cartAddresses = this.cart.itemShippingAddresses.map(address => {
+        // Find quantity for this address
+        const quantity = this.addressQuantities[address.key || ''] || 
+                        (this.cartItemId && this.cart?.lineItems ? 
+                          this.cart.lineItems.find(item => item.id === this.cartItemId)?.shippingDetails?.targets.find(
+                            target => target.addressKey === address.key
+                          )?.quantity : 0) || 1;
+        
+        // Convert to CsvRowData format
+        return {
+          firstName: address.firstName || '',
+          lastName: address.lastName || '',
+          streetNumber: address.streetNumber || '',
+          streetName: address.streetName || '',
+          city: address.city || '',
+          state: address.state || '',
+          zipCode: address.postalCode || '',
+          country: address.country || '',
+          quantity: quantity,
+          key: address.key // Keep the original key
+        };
+      });
+      
+      // Add to addresses (avoiding duplicates by key)
+      cartAddresses.forEach(address => {
+        if (!addresses.some(a => a.key === address.key)) {
+          addresses.push(address);
+        }
+      });
+    }
+    
+    return addresses;
+  }
+
   private renderWizardStep() {
     switch (this.currentStep) {
       case WizardStep.CSV_UPLOAD:
@@ -259,7 +299,7 @@ export default class SplitShippingModal extends LitElement {
       case WizardStep.ADDRESS_TABLE:
         return html`
           <split-shipping-address-table
-            .addresses=${this.csvAddresses}
+            .addresses=${this.getCombinedAddresses()}
             .cartItemId=${this.cartItemId}
             .locale=${this.locale}
             .isFirstStep=${!this.enableCSVUpload}
@@ -302,6 +342,7 @@ export default class SplitShippingModal extends LitElement {
 
   render() {
     const visibleSteps = this.getVisibleSteps();
+    const combinedAddresses = this.getCombinedAddresses();
     
     return html`
       <div class="modal-backdrop" @click=${this.handleBackdropClick}>
