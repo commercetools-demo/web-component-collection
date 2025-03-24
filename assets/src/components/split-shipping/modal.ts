@@ -4,25 +4,29 @@ import { classMap } from 'lit/directives/class-map.js';
 import './address-section';
 import './shipping-section';
 
+// Enum for wizard steps
+enum WizardStep {
+  ADDRESS = 0,
+  SHIPPING = 1
+}
+
 export default class SplitShippingModal extends LitElement {
   static properties = {
     cart: { type: Object, hasChanged(newVal: Cart, oldVal: Cart) {
-      console.log('cart has changed', newVal, oldVal);
       // Custom hasChanged to detect deep changes in the cart object
       return JSON.stringify(newVal) !== JSON.stringify(oldVal);
     }},
     cartItemId: { type: String, attribute: 'cart-item-id' },
     locale: { type: String },
-    addressQuantities: { type: Object }
+    addressQuantities: { type: Object },
+    currentStep: { type: Number, state: true }
   };
 
   cart: Cart | null = null;
   cartItemId: string = '';
   locale: string = 'en-US';
   addressQuantities: Record<string, number> = {};
-  
-  private addressSectionExpanded: boolean = true;
-  private shippingSectionExpanded: boolean = true;
+  currentStep: WizardStep = WizardStep.ADDRESS;
 
   static styles = css`
     .modal-backdrop {
@@ -77,40 +81,67 @@ export default class SplitShippingModal extends LitElement {
       flex: var(--modal-body-flex, 1);
     }
     
-    .section {
-      margin-bottom: var(--section-margin-bottom, 24px);
-      border: var(--section-border, 1px solid #eee);
-      border-radius: var(--section-border-radius, 4px);
+    .wizard-steps {
+      display: var(--wizard-steps-display, flex);
+      justify-content: var(--wizard-steps-justify-content, center);
+      margin-bottom: var(--wizard-steps-margin-bottom, 20px);
+      border-bottom: var(--wizard-steps-border-bottom, 1px solid #eee);
+      padding-bottom: var(--wizard-steps-padding-bottom, 10px);
     }
     
-    .section-header {
-      padding: var(--section-header-padding, 12px 16px);
-      background-color: var(--section-header-background-color, #f5f5f5);
-      display: var(--section-header-display, flex);
-      justify-content: var(--section-header-justify-content, space-between);
-      align-items: var(--section-header-align-items, center);
-      cursor: var(--section-header-cursor, pointer);
-      border-bottom: var(--section-header-border-bottom, 1px solid #eee);
+    .wizard-step {
+      margin: var(--wizard-step-margin, 0 15px);
+      padding: var(--wizard-step-padding, 8px 0);
+      cursor: var(--wizard-step-cursor, pointer);
+      color: var(--wizard-step-color, #666);
+      position: var(--wizard-step-position, relative);
     }
     
-    .section-title {
-      margin: var(--section-title-margin, 0);
-      font-size: var(--section-title-font-size, 16px);
-      font-weight: var(--section-title-font-weight, bold);
+    .wizard-step.active {
+      color: var(--wizard-step-active-color, #3f51b5);
+      font-weight: var(--wizard-step-active-font-weight, bold);
     }
     
-    .section-toggle {
-      font-size: var(--section-toggle-font-size, 9px);
+    .wizard-step.active::after {
+      content: '';
+      position: absolute;
+      bottom: -11px;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background-color: var(--wizard-step-active-indicator-color, #3f51b5);
     }
     
-    .section-content {
-      padding: var(--section-content-padding, 16px);
+    .wizard-content {
+      min-height: var(--wizard-content-min-height, 200px);
     }
     
-    .hidden {
-      display: none;
+    .wizard-buttons {
+      display: var(--wizard-buttons-display, flex);
+      justify-content: var(--wizard-buttons-justify-content, space-between);
+      margin-top: var(--wizard-buttons-margin-top, 20px);
+      padding-top: var(--wizard-buttons-padding-top, 15px);
+      border-top: var(--wizard-buttons-border-top, 1px solid #eee);
     }
-
+    
+    .wizard-button {
+      background-color: var(--wizard-button-background-color, #3f51b5);
+      color: var(--wizard-button-color, white);
+      border: var(--wizard-button-border, none);
+      padding: var(--wizard-button-padding, 8px 16px);
+      border-radius: var(--wizard-button-border-radius, 4px);
+      cursor: var(--wizard-button-cursor, pointer);
+      font-size: var(--wizard-button-font-size, 14px);
+    }
+    
+    .wizard-button.previous {
+      background-color: var(--wizard-button-previous-background-color, #9e9e9e);
+    }
+    
+    .wizard-button:hover {
+      opacity: var(--wizard-button-hover-opacity, 0.9);
+    }
+    
     .info-message {
       padding: var(--info-message-padding, 16px);
       background-color: var(--info-message-background-color, #e3f2fd);
@@ -124,6 +155,7 @@ export default class SplitShippingModal extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     document.body.style.overflow = 'hidden'; // Prevent scrolling when modal is open
+    this.initializeWizardStep();
   }
 
   disconnectedCallback() {
@@ -132,10 +164,19 @@ export default class SplitShippingModal extends LitElement {
   }
 
   updated(changedProperties: Map<string, any>) {
-    console.log('changedProperties', changedProperties);
     if (changedProperties.has('cart')) {
       // When cart changes, notify child components by forcing an update
       this.requestUpdate();
+      this.initializeWizardStep();
+    }
+  }
+
+  private initializeWizardStep() {
+    // Skip to shipping step if cart already has itemShippingAddresses
+    if (this.hasShippingAddresses()) {
+      this.currentStep = WizardStep.SHIPPING;
+    } else {
+      this.currentStep = WizardStep.ADDRESS;
     }
   }
 
@@ -147,16 +188,6 @@ export default class SplitShippingModal extends LitElement {
     }));
   }
 
-  private toggleAddressSection() {
-    this.addressSectionExpanded = !this.addressSectionExpanded;
-    this.requestUpdate();
-  }
-
-  private toggleShippingSection() {
-    this.shippingSectionExpanded = !this.shippingSectionExpanded;
-    this.requestUpdate();
-  }
-
   private handleBackdropClick(e: MouseEvent) {
     const target = e.target as HTMLElement;
     if (target.classList.contains('modal-backdrop')) {
@@ -164,16 +195,55 @@ export default class SplitShippingModal extends LitElement {
     }
   }
 
-  private handleAddressesSelected() {
-    this.toggleAddressSection();
+  private handleAddressesSelected(e: CustomEvent) {
+  
+    this.goToStep(WizardStep.SHIPPING);
   }
 
+  private goToStep(step: WizardStep) {
+    this.currentStep = step;
+  }
+
+  private goToPreviousStep() {
+    if (this.currentStep > 0) {
+      this.currentStep--;
+    }
+  }
+
+  private goToNextStep() {
+    this.currentStep++;
+  }
 
   private hasShippingAddresses(): boolean {
     return !!(this.cart && 
               this.cart.itemShippingAddresses && 
               Array.isArray(this.cart.itemShippingAddresses) && 
               this.cart.itemShippingAddresses.length > 0);
+  }
+
+  private renderWizardStep() {
+    switch (this.currentStep) {
+      case WizardStep.ADDRESS:
+        return html`
+          <split-shipping-address-section 
+            .cart=${this.cart}
+            .cartItemId=${this.cartItemId}
+            .locale=${this.locale}
+            @addresses-selected=${this.handleAddressesSelected}
+          ></split-shipping-address-section>
+        `;
+      case WizardStep.SHIPPING:
+        return html`
+          <split-shipping-shipping-section 
+            .cart=${this.cart}
+            .cartItemId=${this.cartItemId}
+            .locale=${this.locale}
+            .addressQuantities=${this.addressQuantities}
+          ></split-shipping-shipping-section>
+        `;
+      default:
+        return html`<div>Invalid step</div>`;
+    }
   }
 
   render() {
@@ -186,41 +256,38 @@ export default class SplitShippingModal extends LitElement {
           </div>
           
           <div class="modal-body">
-            <div class="section">
-              <div class="section-header" @click=${this.toggleAddressSection}>
-                <h3 class="section-title">Addresses</h3>
-                <span class="section-toggle">${this.addressSectionExpanded ? '▼' : '▶'}</span>
+            <div class="wizard-steps">
+              <div 
+                class=${classMap({ 'wizard-step': true, 'active': this.currentStep === WizardStep.ADDRESS })}
+                @click=${() => this.goToStep(WizardStep.ADDRESS)}
+              >
+                1. Select Addresses
               </div>
-              <div class=${classMap({ 'section-content': true, 'hidden': !this.addressSectionExpanded })}>
-                <split-shipping-address-section 
-                  .cart=${this.cart}
-                  .cartItemId=${this.cartItemId}
-                  .locale=${this.locale}
-                  @addresses-selected=${this.handleAddressesSelected}
-                ></split-shipping-address-section>
+              <div 
+                class=${classMap({ 'wizard-step': true, 'active': this.currentStep === WizardStep.SHIPPING })}
+                @click=${() => this.goToStep(WizardStep.SHIPPING)}
+              >
+                2. Allocate Shipping
               </div>
             </div>
             
-            ${this.hasShippingAddresses() ? html`
-              <div class="section">
-                <div class="section-header" @click=${this.toggleShippingSection}>
-                  <h3 class="section-title">Shipping</h3>
-                  <span class="section-toggle">${this.shippingSectionExpanded ? '▼' : '▶'}</span>
-                </div>
-                <div class=${classMap({ 'section-content': true, 'hidden': !this.shippingSectionExpanded })}>
-                  <split-shipping-shipping-section 
-                    .cart=${this.cart}
-                    .cartItemId=${this.cartItemId}
-                    .locale=${this.locale}
-                    .addressQuantities=${this.addressQuantities}
-                  ></split-shipping-shipping-section>
-                </div>
-              </div>
-            ` : html`
-              <div class="info-message">
-                Please add shipping addresses in the address section first before proceeding to shipping allocation.
-              </div>
-            `}
+            <div class="wizard-content">
+              ${this.renderWizardStep()}
+            </div>
+            
+            <div class="wizard-buttons">
+              ${this.currentStep > 0 ? html`
+                <button class="wizard-button previous" @click=${this.goToPreviousStep}>
+                  Previous
+                </button>
+              ` : html`<div></div>`}
+              
+              ${this.currentStep === WizardStep.ADDRESS ? html`
+                <button class="wizard-button next" @click=${this.goToNextStep}>
+                  Next
+                </button>
+              ` : html`<div></div>`}
+            </div>
           </div>
         </div>
       </div>

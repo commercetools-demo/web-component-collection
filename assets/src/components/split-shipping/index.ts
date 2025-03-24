@@ -153,26 +153,25 @@ export default class SplitShipping extends LitElement {
                addr.additionalAddressInfo !== originalAddress.additionalAddressInfo 
       });
 
-      // Dispatch event to notify that addresses have been allocated
+      // Update cart with new targets (quantities)
       await this.updateCartTargets(targets);
       
-
-      // If there are addresses with changed comments, dispatch another event
+      // If there are addresses with changed comments, update those too
       if (addressesWithChangedComments.length > 0) {
         await this.updateCartAddresses(addressesWithChangedComments);
       }
 
-      // show success message
-      alert('Shipping allocation submitted successfully. You can now close the modal.');
-
       // Show success message
+      alert('Shipping allocation submitted successfully. You can now close the modal.');
+      
+      // Close the modal
+      this.closeModal();
     } catch (error) {
       console.error('Error submitting shipping allocation:', error);
     }
   }
 
   private async updateCartTargets(targets: any[]) {
-
     const response = await fetch(`${this.baseUrl}/carts/${this.cartId}/line-items/${this.cartItemId}/shipping-addresses`, {
       method: 'POST',
       headers: {
@@ -192,9 +191,7 @@ export default class SplitShipping extends LitElement {
   }
 
   private async updateCartAddresses(addresses: ShippingAddress[]) {
-
     try {
-      
       if (!addresses || !Array.isArray(addresses)) {
         return;
       }
