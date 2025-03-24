@@ -21,6 +21,7 @@ export default class SplitShippingModal extends LitElement {
     cartItemId: { type: String, attribute: 'cart-item-id' },
     locale: { type: String },
     addressQuantities: { type: Object },
+    enableCSVUpload: { type: Boolean },
     currentStep: { type: Number, state: true },
     csvAddresses: { type: Array, state: true }
   };
@@ -29,6 +30,7 @@ export default class SplitShippingModal extends LitElement {
   cartItemId: string = '';
   locale: string = 'en-US';
   addressQuantities: Record<string, number> = {};
+  enableCSVUpload: boolean = false;
   currentStep: WizardStep = WizardStep.CSV_UPLOAD;
   csvAddresses: any[] = [];
 
@@ -179,6 +181,9 @@ export default class SplitShippingModal extends LitElement {
     // Skip to shipping step if cart already has itemShippingAddresses
     if (this.hasShippingAddresses()) {
       this.currentStep = WizardStep.SHIPPING;
+    } else if (!this.enableCSVUpload) {
+      // Skip CSV step if it's disabled
+      this.currentStep = WizardStep.ADDRESS_TABLE;
     } else {
       this.currentStep = WizardStep.CSV_UPLOAD;
     }
@@ -230,9 +235,7 @@ export default class SplitShippingModal extends LitElement {
   }
 
   private goToNextStep() {
-    if (this.currentStep < WizardStep.SHIPPING) {
       this.currentStep++;
-    }
   }
 
   private hasShippingAddresses(): boolean {
@@ -259,6 +262,7 @@ export default class SplitShippingModal extends LitElement {
             .addresses=${this.csvAddresses}
             .cartItemId=${this.cartItemId}
             .locale=${this.locale}
+            .isFirstStep=${!this.enableCSVUpload}
             @address-table-submit=${this.handleAddressTableSubmit}
           ></split-shipping-address-table>
         `;
@@ -281,15 +285,24 @@ export default class SplitShippingModal extends LitElement {
       case WizardStep.CSV_UPLOAD:
         return "1. Upload CSV";
       case WizardStep.ADDRESS_TABLE:
-        return "2. Review Addresses";
+        return this.enableCSVUpload ? "2. Review Addresses" : "1. Add Addresses";
       case WizardStep.SHIPPING:
-        return "3. Allocate Shipping";
+        return this.enableCSVUpload ? "3. Allocate Shipping" : "2. Allocate Shipping";
       default:
         return "";
     }
   }
 
+  private getVisibleSteps() {
+    // Return all steps or filter out CSV_UPLOAD step based on enableCSVUpload
+    return this.enableCSVUpload 
+      ? [WizardStep.CSV_UPLOAD, WizardStep.ADDRESS_TABLE, WizardStep.SHIPPING]
+      : [WizardStep.ADDRESS_TABLE, WizardStep.SHIPPING];
+  }
+
   render() {
+    const visibleSteps = this.getVisibleSteps();
+    
     return html`
       <div class="modal-backdrop" @click=${this.handleBackdropClick}>
         <div class="modal-content">
@@ -300,24 +313,17 @@ export default class SplitShippingModal extends LitElement {
           
           <div class="modal-body">
             <div class="wizard-steps">
-              <div 
-                class=${classMap({ 'wizard-step': true, 'active': this.currentStep === WizardStep.CSV_UPLOAD })}
-                @click=${() => this.goToStep(WizardStep.CSV_UPLOAD)}
-              >
-                ${this.getStepTitle(WizardStep.CSV_UPLOAD)}
-              </div>
-              <div 
-                class=${classMap({ 'wizard-step': true, 'active': this.currentStep === WizardStep.ADDRESS_TABLE })}
-                @click=${() => this.csvAddresses.length > 0 && this.goToStep(WizardStep.ADDRESS_TABLE)}
-              >
-                ${this.getStepTitle(WizardStep.ADDRESS_TABLE)}
-              </div>
-              <div 
-                class=${classMap({ 'wizard-step': true, 'active': this.currentStep === WizardStep.SHIPPING })}
-                @click=${() => this.hasShippingAddresses() && this.goToStep(WizardStep.SHIPPING)}
-              >
-                ${this.getStepTitle(WizardStep.SHIPPING)}
-              </div>
+              ${visibleSteps.map(step => html`
+                <div 
+                  class=${classMap({ 
+                    'wizard-step': true, 
+                    'active': this.currentStep === step 
+                  })}
+                  @click=${() => {this.goToStep(step)}}
+                >
+                  ${this.getStepTitle(step)}
+                </div>
+              `)}
             </div>
             
             <div class="wizard-content">
@@ -325,14 +331,14 @@ export default class SplitShippingModal extends LitElement {
             </div>
             
             <div class="wizard-buttons">
-              ${this.currentStep > 0 ? html`
+              ${this.currentStep > (this.enableCSVUpload ? WizardStep.CSV_UPLOAD : WizardStep.ADDRESS_TABLE) ? html`
                 <button class="wizard-button previous" @click=${this.goToPreviousStep}>
                   Previous
                 </button>
               ` : html`<div></div>`}
               
               ${this.currentStep === WizardStep.CSV_UPLOAD ? html`
-                <button class="wizard-button next" @click=${this.goToNextStep} ?disabled=${this.csvAddresses.length === 0}>
+                <button class="wizard-button next" @click=${this.goToNextStep}>
                   Next
                 </button>
               ` : this.currentStep === WizardStep.ADDRESS_TABLE ? html`

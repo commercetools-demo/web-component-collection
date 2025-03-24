@@ -10,6 +10,7 @@ export default class SplitShipping extends LitElement {
     locale: { type: String },
     cartId: { type: String, attribute: 'cart-id' },
     cartItemId: { type: String, attribute: 'cart-item-id' },
+    enableCSVUpload: { type: Boolean, attribute: 'enable-csv-upload' },
     isOpen: { type: Boolean, state: true },
     addressQuantities: { type: Object, state: true }
   };
@@ -18,6 +19,7 @@ export default class SplitShipping extends LitElement {
   locale: string = 'en-US';
   cartId: string = '';
   cartItemId: string = '';
+  enableCSVUpload: boolean = false;
   isOpen: boolean = false;
   addressQuantities: Record<string, number> = {};
   
@@ -232,6 +234,7 @@ export default class SplitShipping extends LitElement {
           .cart=${this.cart}
           .cartItemId=${this.cartItemId}
           .addressQuantities=${this.addressQuantities}
+          .enableCSVUpload=${this.enableCSVUpload}
           @close=${this.closeModal}
           @addresses-selected=${this.handleAddressesSelected}
           @shipping-allocation-submitted=${this.handleShippingAllocationSubmitted}

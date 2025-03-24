@@ -19,13 +19,15 @@ export default class AddressTable extends LitElement {
     addresses: { type: Array },
     editable: { type: Boolean },
     cartItemId: { type: String, attribute: 'cart-item-id' },
-    locale: { type: String }
+    locale: { type: String },
+    isFirstStep: { type: Boolean }  // New property to indicate if this is the first step
   };
 
   addresses: CsvRowData[] = [];
   editable: boolean = true;
   cartItemId: string = '';
   locale: string = 'en-US';
+  isFirstStep: boolean = false;
 
   @state()
   errorMessage: string = '';
@@ -141,6 +143,14 @@ export default class AddressTable extends LitElement {
     .submit-button:disabled {
       background-color: var(--submit-button-disabled-bg, #cccccc);
       cursor: not-allowed;
+    }
+    
+    .instructions {
+      margin-bottom: 20px;
+      padding: 15px;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+      border-left: 4px solid #3f51b5;
     }
   `;
 
@@ -259,67 +269,71 @@ export default class AddressTable extends LitElement {
   render() {
     return html`
       <div>
+      
         ${this.errorMessage ? html`<div class="error-message">${this.errorMessage}</div>` : ''}
         
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>First Name</th>
-              <th>Last Name</th>
-              <th>Street Number</th>
-              <th>Street Name</th>
-              <th>City</th>
-              <th>State</th>
-              <th>Zip Code</th>
-              <th>Country</th>
-              <th>Quantity</th>
-              ${this.editable ? html`<th></th>` : ''}
-            </tr>
-          </thead>
-          <tbody>
-            ${this.addresses.map((row, index) => html`
-              <tr>
-                <td>${row.firstName}</td>
-                <td>${row.lastName}</td>
-                <td>${row.streetNumber}</td>
-                <td>${row.streetName}</td>
-                <td>${row.city}</td>
-                <td>${row.state}</td>
-                <td>${row.zipCode}</td>
-                <td>${row.country}</td>
-                <td>${row.quantity}</td>
-                ${this.editable ? html`
-                  <td>
-                    <button class="remove-row-button" @click=${() => this.removeRow(index)}>
-                      X
-                    </button>
-                  </td>
-                ` : ''}
-              </tr>
-            `)}
-          </tbody>
-        </table>
-        
-        ${this.editable ? html`
-          <div class="add-row-container">
-            <h4>Add New Address</h4>
-            <div class="add-row-form">
-              <input type="text" name="firstName" placeholder="First Name" required class="col-span-1">
-              <input type="text" name="lastName" placeholder="Last Name" required class="col-span-1">
-              <input type="text" name="streetNumber" placeholder="Street Number" required class="col-span-1">
-              <input type="text" name="streetName" placeholder="Street Name" required class="col-span-1">
-              <input type="text" name="city" placeholder="City" required class="col-span-1">
-              <input type="text" name="state" placeholder="State" required>
-              <input type="text" name="zipCode" placeholder="Zip Code" required>
-              <input type="text" name="country" placeholder="Country" required> 
-              <input type="number" name="quantity" placeholder="Quantity" value="1" min="1" required>
-              
-              <button class="add-row-button" @click=${this.addRow}>
-                Add Row
-              </button>
-            </div>
+        <div class="add-row-container">
+          <h4>Add New Address</h4>
+          <div class="add-row-form">
+            <input type="text" name="firstName" placeholder="First Name" required>
+            <input type="text" name="lastName" placeholder="Last Name" required>
+            <input type="text" name="streetNumber" placeholder="Street Number" required>
+            <input type="text" name="streetName" placeholder="Street Name" required>
+            <input type="text" name="city" placeholder="City" required>
+            <input type="text" name="state" placeholder="State" required>
+            <input type="text" name="zipCode" placeholder="Zip Code" required>
+            <input type="text" name="country" placeholder="Country" required> 
+            <input type="number" name="quantity" placeholder="Quantity" value="1" min="1" required>
+            
+            <button class="add-row-button" @click=${this.addRow}>
+              Add Address
+            </button>
           </div>
-        ` : ''}
+        </div>
+        
+        ${this.addresses.length > 0 ? html`
+          <h4>Added Addresses</h4>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Street Number</th>
+                <th>Street Name</th>
+                <th>City</th>
+                <th>State</th>
+                <th>Zip Code</th>
+                <th>Country</th>
+                <th>Quantity</th>
+                ${this.editable ? html`<th></th>` : ''}
+              </tr>
+            </thead>
+            <tbody>
+              ${this.addresses.map((row, index) => html`
+                <tr>
+                  <td>${row.firstName}</td>
+                  <td>${row.lastName}</td>
+                  <td>${row.streetNumber}</td>
+                  <td>${row.streetName}</td>
+                  <td>${row.city}</td>
+                  <td>${row.state}</td>
+                  <td>${row.zipCode}</td>
+                  <td>${row.country}</td>
+                  <td>${row.quantity}</td>
+                  ${this.editable ? html`
+                    <td>
+                      <button class="remove-row-button" @click=${() => this.removeRow(index)}>
+                        X
+                      </button>
+                    </td>
+                  ` : ''}
+                </tr>
+              `)}
+            </tbody>
+          </table>
+        ` : html`
+          <p>No addresses added yet. Use the form above to add shipping addresses.</p>
+        `}
         
         <div class="submit-button-container">
           <button 
@@ -327,7 +341,7 @@ export default class AddressTable extends LitElement {
             @click=${this.submitAddresses}
             ?disabled=${this.addresses.length === 0}
           >
-            Review & Submit Addresses
+            ${this.isFirstStep ? 'Continue with Addresses' : 'Review & Submit Addresses'}
           </button>
         </div>
       </div>
