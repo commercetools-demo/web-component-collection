@@ -379,6 +379,15 @@ export default class SplitShippingCheckout extends LitElement {
     // Set shipping address
     const updatedCart = await this.checkoutService.setShippingAddress(this.cartId, this.shippingAddress as Address);
 
+    // Set billing address if different
+    if (!this.billingAddressSameAsShipping) {
+      await this.checkoutService.setBillingAddress(this.cartId, this.billingAddress as Address);
+    }
+
+    // Set shipping method
+    if (this.selectedShippingMethodId) {
+      await this.checkoutService.setShippingMethod(this.cartId, this.shippingAddress as Address, this.shippingAddress.key || '', this.selectedShippingMethodId);
+    }
 
     for (const lineItem of this.cart.lineItems) {
       const targets: ShippingTarget[] = [{
@@ -390,16 +399,6 @@ export default class SplitShippingCheckout extends LitElement {
       if (targets.length > 0) {
         await this.checkoutService.setLineItemShippingAddress(this.cartId, lineItem.id, targets);
       }
-    }
-
-    // Set billing address if different
-    if (!this.billingAddressSameAsShipping) {
-      await this.checkoutService.setBillingAddress(this.cartId, this.billingAddress as Address);
-    }
-
-    // Set shipping method
-    if (this.selectedShippingMethodId) {
-      await this.checkoutService.setShippingMethod(this.cartId, this.shippingAddress as Address, this.shippingAddress.key || '', this.selectedShippingMethodId);
     }
 
     // Update cart
