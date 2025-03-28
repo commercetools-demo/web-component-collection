@@ -28,13 +28,22 @@
   locale="es-MX">
 </step-variant-selector> -->
 
-<split-shipping
+<!-- <split-shipping
   base-url="http://localhost:8080/service"
   locale="en-US"
   cart-id="45bf8705-e1c2-4d5a-8d41-f254012c3ced"
   cart-item-id="cb1a6e53-d663-4366-94b7-5e1a7a12dc41">
   Split
-</split-shipping>
+</split-shipping> -->
+
+<div style="width: 30%;">
+<split-shipping-checkout
+  baseUrl="http://localhost:8080/service"
+  locale="en-US"
+  cartId="2b5007bb-09a4-4447-87dd-ebf78cdcea4d"
+  userId="1539fa66-095a-4f66-90c3-0722d9413d10">
+</split-shipping-checkout>
+</div>
 
     </div>
     <script type="module" src="/src/main.ts"></script>
