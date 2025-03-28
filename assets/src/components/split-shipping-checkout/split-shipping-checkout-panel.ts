@@ -243,18 +243,18 @@ export default class SplitShippingCheckoutPanel extends LitElement {
     }
 
     .button {
-      padding: 0.75rem 1.5rem;
+      padding: var(--checkout-button-padding, 0.75rem 1.5rem);
       font-size: 1rem;
       font-weight: 500;
       border: none;
-      border-radius: 4px;
+      border-radius: var(--checkout-button-border-radius, 4px);
       cursor: pointer;
       transition: background-color 0.2s;
     }
 
     .primary-button {
       background-color: var(--checkout-primary-color, #3366ff);
-      color: white;
+      color: var(--checkout-button-text-color, #fff);
     }
 
     .primary-button:disabled {
@@ -264,7 +264,7 @@ export default class SplitShippingCheckoutPanel extends LitElement {
     }
       
     .primary-button:hover:not(:disabled) {
-      background-color: #2255ee;
+      background-color: var(--checkout-primary-color-hover, #2255ee);
     }
 
     .secondary-button {
@@ -276,7 +276,7 @@ export default class SplitShippingCheckoutPanel extends LitElement {
     }
 
     .secondary-button:hover {
-      background-color: rgba(51, 102, 255, 0.1);
+      background-color: var(--checkout-secondary-button-hover-background-color, rgba(51, 102, 255, 0.1));
     }
 
     .address-header {
