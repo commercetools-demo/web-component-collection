@@ -22,7 +22,7 @@ export default class NormalShippingCheckoutPanel extends LitElement {
   @state() private isEditingShipping = true;
   @state() private isEditingBilling = false;
   @state() private selectedShippingMethodId = '';
-  @state() private usingSavedAddresses = true;
+  @state() private usingSavedAddresses = this.userAddresses.length > 0 ? true : false;
 
 
   private handleShippingAddressChange(e: CustomEvent) {
