@@ -18,16 +18,9 @@ interface AddressData {
   [key: string]: any;
 }
 
-// Define CSV row data interface
+// Define dynamic CSV row data interface to match address-table.ts
 interface CsvRowData {
-  firstName: string;
-  lastName: string;
-  streetNumber: string;
-  streetName: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country: string;
+  [key: string]: string | number;
   quantity: number;
 }
 
@@ -39,18 +32,28 @@ interface Account {
   [key: string]: any;
 }
 
+interface AddressField {
+  label: string;
+}
+
+interface AddressFields {
+  [key: string]: AddressField;
+}
+
 export default class SplitShippingAddressSection extends LitElement {
   static properties = {
     cart: { type: Object },
     account: { type: Object },
     cartItemId: { type: String, attribute: 'cart-item-id' },
-    locale: { type: String }
+    locale: { type: String },
+    addressFields: { type: Object }
   };
 
   cart: Cart | null = null;
   account: Account | null = null;
   cartItemId: string = '';
   locale: string = 'en-US';
+  addressFields: AddressFields = {};
   
   private isDragging: boolean = false;
   private csvData: CsvRowData[] = [];
@@ -293,7 +296,9 @@ export default class SplitShippingAddressSection extends LitElement {
       
       // Get headers and validate required columns
       const headers = lines[0].split(',').map(header => header.trim());
-      const requiredColumns = ['firstName', 'lastName', 'streetNumber', 'streetName', 'city', 'state', 'zipCode', 'country', 'quantity'];
+      
+      // Get required columns from addressFields
+      const requiredColumns = [...Object.keys(this.addressFields), 'quantity'];
       
       const missingColumns = requiredColumns.filter(col => !headers.includes(col));
       if (missingColumns.length > 0) {
@@ -367,18 +372,27 @@ export default class SplitShippingAddressSection extends LitElement {
 
     try {
       // Convert CSV data to address data format
-      const addresses: AddressData[] = this.csvData.map((row) => ({
-        key: `csv-${row.firstName}-${row.lastName}`,
-        country: row.country,
-        firstName: row.firstName,
-        lastName: row.lastName,
-        streetName: row.streetName,
-        streetNumber: row.streetNumber,
-        city: row.city,
-        state: row.state,
-        postalCode: row.zipCode,
-        quantity: row.quantity
-      }));
+      const addresses: AddressData[] = this.csvData.map((row) => {
+        const address: AddressData = {
+          key: `csv-${row.firstName}-${row.lastName}`,
+          country: row.country as string,
+          quantity: row.quantity as number
+        };
+        
+        // Add all other fields from addressFields
+        Object.keys(this.addressFields).forEach(field => {
+          if (field !== 'country') { // country is already set
+            address[field] = row[field] as string;
+          }
+        });
+        
+        // Map zipCode to postalCode if it exists
+        if ('zipCode' in row) {
+          address.postalCode = row.zipCode as string;
+        }
+        
+        return address;
+      });
 
       // Dispatch event to notify that addresses have been selected
       this.dispatchEvent(new CustomEvent('addresses-selected', {
@@ -431,7 +445,7 @@ export default class SplitShippingAddressSection extends LitElement {
             Drag & drop your CSV file here or click to browse
           </div>
           <div class="dropzone-text">
-            <small>Accepted format: .csv with columns for firstName, lastName, streetNumber, streetName, city, state, zipCode, country, quantity</small>
+            <small>Accepted format: .csv with columns for ${Object.keys(this.addressFields).join(', ')}, quantity</small>
           </div>
           <input 
             type="file" 
@@ -459,6 +473,7 @@ export default class SplitShippingAddressSection extends LitElement {
           <h4>Shipping Addresses</h4>
           <address-table 
             .addresses=${this.csvData}
+            .addressFields=${this.addressFields}
             @addresses-updated=${(e: CustomEvent) => { this.csvData = e.detail.addresses; }}
           ></address-table>
           

@@ -4,6 +4,14 @@ import { state } from 'lit/decorators.js';
 import './modal';
 import { ShippingAddress } from './shipping-address-item';
 
+interface AddressField {
+  label: string;
+}
+
+interface AddressFields {
+  [key: string]: AddressField;
+}
+
 export default class SplitShipping extends LitElement {
   static properties = {
     baseUrl: { type: String, attribute: 'base-url' },
@@ -11,7 +19,8 @@ export default class SplitShipping extends LitElement {
     cartId: { type: String, attribute: 'cart-id' },
     cartItemId: { type: String, attribute: 'cart-item-id' },
     isOpen: { type: Boolean, state: true },
-    addressQuantities: { type: Object, state: true }
+    addressQuantities: { type: Object, state: true },
+    addressFields: { type: Object }
   };
 
   baseUrl: string = '';
@@ -20,6 +29,16 @@ export default class SplitShipping extends LitElement {
   cartItemId: string = '';
   isOpen: boolean = false;
   addressQuantities: Record<string, number> = {};
+  addressFields: AddressFields = {
+    firstName: { label: "First Name" },
+    lastName: { label: "Last Name" },
+    streetNumber: { label: "Street Number" },
+    streetName: { label: "Street Name" },
+    city: { label: "City" },
+    state: { label: "State" },
+    zipCode: { label: "Zip Code" },
+    country: { label: "Country" }
+  };
   
   @state()
   private cart: Cart | null = null;
@@ -235,6 +254,7 @@ export default class SplitShipping extends LitElement {
           .cart=${this.cart}
           .cartItemId=${this.cartItemId}
           .addressQuantities=${this.addressQuantities}
+          .addressFields=${this.addressFields}
           @close=${this.closeModal}
           @addresses-selected=${this.handleAddressesSelected}
           @shipping-allocation-submitted=${this.handleShippingAllocationSubmitted}

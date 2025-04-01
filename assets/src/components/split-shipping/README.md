@@ -11,6 +11,7 @@ A web component for managing split shipping functionality in a commercetools-bas
 - Custom styling via CSS variables
 - Event-based communication
 - Integration with customer account addresses
+- **Customizable address fields** for flexibility
 
 ## Usage
 
@@ -37,6 +38,27 @@ A web component for managing split shipping functionality in a commercetools-bas
   <span>Custom Button Text</span>
   <img src="shipping-icon.svg" alt="Shipping Icon">
 </split-shipping>
+
+<!-- With custom address fields -->
+<split-shipping
+  base-url="https://api.example.com"
+  locale="en-US"
+  cart-id="cart-123"
+  cart-item-id="line-item-456"
+  .addressFields="${{
+    firstName: { label: 'First Name' },
+    lastName: { label: 'Last Name' },
+    companyName: { label: 'Company' },
+    streetNumber: { label: 'Street Number' },
+    streetName: { label: 'Street Name' },
+    city: { label: 'City' },
+    state: { label: 'State' },
+    zipCode: { label: 'Zip Code' },
+    country: { label: 'Country' }
+  }}"
+>
+  Split Shipping
+</split-shipping>
 ```
 
 ## Attributes
@@ -48,6 +70,33 @@ A web component for managing split shipping functionality in a commercetools-bas
 | cart-id       | String | ID of the cart to modify                         | Yes      |
 | cart-item-id  | String | ID of the cart item to modify                    | Yes      |
 | account-id    | String | ID of the customer account to fetch addresses    | No       |
+
+## Properties
+
+| Property      | Type   | Description                                      | Default |
+|---------------|--------|--------------------------------------------------|---------|
+| addressFields | Object | Configuration for address fields to display and collect | `{ firstName: { label: "First Name" }, lastName: { label: "Last Name" }, streetNumber: { label: "Street Number" }, streetName: { label: "Street Name" }, city: { label: "City" }, state: { label: "State" }, zipCode: { label: "Zip Code" }, country: { label: "Country" } }` |
+
+### Custom Address Fields
+
+The `addressFields` property allows customization of which address fields are displayed and collected in the address table and CSV template. Each field is defined with a label that will be used in the UI:
+
+```javascript
+{
+  firstName: { label: "First Name" },
+  lastName: { label: "Last Name" },
+  // Add or remove fields as needed
+  companyName: { label: "Company" },
+  streetNumber: { label: "Street Number" },
+  streetName: { label: "Street Name" },
+  city: { label: "City" },
+  state: { label: "State" },
+  zipCode: { label: "Zip Code" },
+  country: { label: "Country" }
+}
+```
+
+The component will automatically adjust the table columns, form fields, and CSV validation based on the fields provided.
 
 ## Events
 

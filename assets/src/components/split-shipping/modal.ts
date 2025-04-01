@@ -4,6 +4,14 @@ import { classMap } from 'lit/directives/class-map.js';
 import './address-section';
 import './shipping-section';
 
+interface AddressField {
+  label: string;
+}
+
+interface AddressFields {
+  [key: string]: AddressField;
+}
+
 export default class SplitShippingModal extends LitElement {
   static properties = {
     cart: { type: Object, hasChanged(newVal: Cart, oldVal: Cart) {
@@ -13,13 +21,15 @@ export default class SplitShippingModal extends LitElement {
     }},
     cartItemId: { type: String, attribute: 'cart-item-id' },
     locale: { type: String },
-    addressQuantities: { type: Object }
+    addressQuantities: { type: Object },
+    addressFields: { type: Object }
   };
 
   cart: Cart | null = null;
   cartItemId: string = '';
   locale: string = 'en-US';
   addressQuantities: Record<string, number> = {};
+  addressFields: AddressFields = {};
   
   private addressSectionExpanded: boolean = true;
   private shippingSectionExpanded: boolean = true;
@@ -196,6 +206,7 @@ export default class SplitShippingModal extends LitElement {
                   .cart=${this.cart}
                   .cartItemId=${this.cartItemId}
                   .locale=${this.locale}
+                  .addressFields=${this.addressFields}
                   @addresses-selected=${this.handleAddressesSelected}
                 ></split-shipping-address-section>
               </div>
