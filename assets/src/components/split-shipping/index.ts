@@ -24,8 +24,8 @@ export default class SplitShipping extends LitElement {
     cartItemId: { type: String, attribute: 'cart-item-id' },
     isOpen: { type: Boolean, state: true },
     addressQuantities: { type: Object, state: true },
-    addressFields: { type: Object },
-    translations: { type: Object }
+    addressFields: { type: Object, attribute: 'address-fields' },
+    translations: { type: Object, attribute: 'translations' }
   };
 
   baseUrl: string = '';
