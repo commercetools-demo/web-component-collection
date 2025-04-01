@@ -12,6 +12,7 @@ A web component for managing split shipping functionality in a commercetools-bas
 - Event-based communication
 - Integration with customer account addresses
 - **Customizable address fields** for flexibility
+- **Internationalization support** via translations property
 
 ## Usage
 
@@ -59,6 +60,22 @@ A web component for managing split shipping functionality in a commercetools-bas
 >
   Split Shipping
 </split-shipping>
+
+<!-- With custom translations -->
+<split-shipping
+  base-url="https://api.example.com"
+  locale="fr-FR"
+  cart-id="cart-123"
+  cart-item-id="line-item-456"
+  .translations="${{
+    'modal.title': 'Livraison Divisée',
+    'modal.addresses.title': 'Adresses',
+    'button.label': 'Livraison Divisée',
+    'shippingSection.submitButton': 'Soumettre l\'allocation'
+  }}"
+>
+  Livraison Divisée
+</split-shipping>
 ```
 
 ## Attributes
@@ -76,6 +93,7 @@ A web component for managing split shipping functionality in a commercetools-bas
 | Property      | Type   | Description                                      | Default |
 |---------------|--------|--------------------------------------------------|---------|
 | addressFields | Object | Configuration for address fields to display and collect | `{ firstName: { label: "First Name" }, lastName: { label: "Last Name" }, streetNumber: { label: "Street Number" }, streetName: { label: "Street Name" }, city: { label: "City" }, state: { label: "State" }, zipCode: { label: "Zip Code" }, country: { label: "Country" } }` |
+| translations  | Object | Translations for all text strings used in the component | See "Translations" section |
 
 ### Custom Address Fields
 
@@ -97,6 +115,82 @@ The `addressFields` property allows customization of which address fields are di
 ```
 
 The component will automatically adjust the table columns, form fields, and CSV validation based on the fields provided.
+
+### Translations
+
+The `translations` property allows you to customize all text strings used in the component and its children. This is useful for internationalization (i18n) or customizing the messaging of the component.
+
+```javascript
+{
+  // Modal
+  "modal.title": "Split Shipping",
+  "modal.addresses.title": "Addresses",
+  "modal.shipping.title": "Shipping",
+  "modal.shipping.infoMessage": "Please add shipping addresses in the address section first before proceeding to shipping allocation.",
+  
+  // Button text (default)
+  "button.label": "Split Shipping",
+  
+  // Address Section
+  "addressSection.title.upload": "Upload Shipping Addresses",
+  "addressSection.title.addresses": "Shipping Addresses",
+  "addressSection.dropzone.text": "Drag & drop your CSV file here or click to browse",
+  "addressSection.dropzone.formatHint": "Accepted format: .csv with columns for firstName, lastName, streetNumber, streetName, city, state, zipCode, country, quantity",
+  "addressSection.dropzone.browseButton": "Browse Files",
+  "addressSection.dropzone.fileInfo": "Selected file:",
+  "addressSection.template.downloadLink": "Download Template",
+  "addressSection.submitButton": "Add addresses to your cart",
+  "addressSection.error.csvMinRows": "CSV file must contain at least a header row and one data row",
+  "addressSection.error.missingColumns": "Missing required columns: ",
+  "addressSection.error.noValidData": "No valid data rows found in CSV file",
+  "addressSection.error.noDataOrCartItem": "Please upload a valid CSV file or add addresses manually first",
+  
+  // Address Table
+  "addressTable.header.quantity": "Quantity",
+  "addressTable.addNew.title": "Add New Address",
+  "addressTable.placeholder.quantity": "Quantity",
+  "addressTable.button.addRow": "Add Row",
+  "addressTable.error.invalidAddress": "Invalid address",
+  
+  // Shipping Section
+  "shippingSection.totalQuantity": "Total quantity to allocate: ",
+  "shippingSection.allocatedQuantity": "Allocated quantity: ",
+  "shippingSection.remainingQuantity": "Remaining quantity: ",
+  "shippingSection.submitButton": "Submit Allocation",
+  "shippingSection.quantityError": "The allocated quantity must match the line item quantity",
+  
+  // Address Item
+  "addressItem.label.quantity": "Quantity",
+  "addressItem.label.comment": "Comment",
+  "addressItem.placeholder.comment": "Add a comment for this address",
+  
+  // Success messages
+  "success.allocation": "Shipping allocation submitted successfully. You can now close the modal."
+}
+```
+
+Example usage with custom translations:
+
+```html
+<split-shipping
+  base-url="https://api.example.com"
+  locale="fr-FR"
+  cart-id="cart-123"
+  cart-item-id="line-item-456"
+  .translations="${{
+    'modal.title': 'Livraison Divisée',
+    'modal.addresses.title': 'Adresses',
+    'button.label': 'Livraison Divisée',
+    'addressSection.submitButton': 'Ajouter des adresses à votre panier',
+    'shippingSection.submitButton': 'Soumettre l\'allocation',
+    // add more translations as needed
+  }}"
+>
+  Livraison Divisée
+</split-shipping>
+```
+
+The translations are passed down to all child components automatically, so you only need to specify them once at the parent `<split-shipping>` component level.
 
 ## Events
 

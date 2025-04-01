@@ -22,7 +22,8 @@ export default class SplitShippingModal extends LitElement {
     cartItemId: { type: String, attribute: 'cart-item-id' },
     locale: { type: String },
     addressQuantities: { type: Object },
-    addressFields: { type: Object }
+    addressFields: { type: Object },
+    translations: { type: Object }
   };
 
   cart: Cart | null = null;
@@ -30,6 +31,7 @@ export default class SplitShippingModal extends LitElement {
   locale: string = 'en-US';
   addressQuantities: Record<string, number> = {};
   addressFields: AddressFields = {};
+  translations: Record<string, string> = {};
   
   private addressSectionExpanded: boolean = true;
   private shippingSectionExpanded: boolean = true;
@@ -142,7 +144,6 @@ export default class SplitShippingModal extends LitElement {
   }
 
   updated(changedProperties: Map<string, any>) {
-    console.log('changedProperties', changedProperties);
     if (changedProperties.has('cart')) {
       // When cart changes, notify child components by forcing an update
       this.requestUpdate();
@@ -191,14 +192,14 @@ export default class SplitShippingModal extends LitElement {
       <div class="modal-backdrop" @click=${this.handleBackdropClick}>
         <div class="modal-content">
           <div class="modal-header">
-            <h2 class="modal-title">Split Shipping</h2>
+            <h2 class="modal-title">${this.translations["modal.title"] || "Split Shipping"}</h2>
             <button class="modal-close" @click=${this.close}>&times;</button>
           </div>
           
           <div class="modal-body">
             <div class="section">
               <div class="section-header" @click=${this.toggleAddressSection}>
-                <h3 class="section-title">Addresses</h3>
+                <h3 class="section-title">${this.translations["modal.addresses.title"] || "Addresses"}</h3>
                 <span class="section-toggle">${this.addressSectionExpanded ? '▼' : '▶'}</span>
               </div>
               <div class=${classMap({ 'section-content': true, 'hidden': !this.addressSectionExpanded })}>
@@ -207,6 +208,7 @@ export default class SplitShippingModal extends LitElement {
                   .cartItemId=${this.cartItemId}
                   .locale=${this.locale}
                   .addressFields=${this.addressFields}
+                  .translations=${this.translations}
                   @addresses-selected=${this.handleAddressesSelected}
                 ></split-shipping-address-section>
               </div>
@@ -215,7 +217,7 @@ export default class SplitShippingModal extends LitElement {
             ${this.hasShippingAddresses() ? html`
               <div class="section">
                 <div class="section-header" @click=${this.toggleShippingSection}>
-                  <h3 class="section-title">Shipping</h3>
+                  <h3 class="section-title">${this.translations["modal.shipping.title"] || "Shipping"}</h3>
                   <span class="section-toggle">${this.shippingSectionExpanded ? '▼' : '▶'}</span>
                 </div>
                 <div class=${classMap({ 'section-content': true, 'hidden': !this.shippingSectionExpanded })}>
@@ -224,12 +226,13 @@ export default class SplitShippingModal extends LitElement {
                     .cartItemId=${this.cartItemId}
                     .locale=${this.locale}
                     .addressQuantities=${this.addressQuantities}
+                    .translations=${this.translations}
                   ></split-shipping-shipping-section>
                 </div>
               </div>
             ` : html`
               <div class="info-message">
-                Please add shipping addresses in the address section first before proceeding to shipping allocation.
+                ${this.translations["modal.shipping.infoMessage"] || "Please add shipping addresses in the address section first before proceeding to shipping allocation."}
               </div>
             `}
           </div>

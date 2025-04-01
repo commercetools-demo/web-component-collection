@@ -19,12 +19,14 @@ export default class AddressTable extends LitElement {
   static properties = {
     addresses: { type: Array },
     editable: { type: Boolean },
-    addressFields: { type: Object }
+    addressFields: { type: Object },
+    translations: { type: Object }
   };
 
   addresses: CsvRowData[] = [];
   editable: boolean = true;
   addressFields: AddressFields = {};
+  translations: Record<string, string> = {};
 
   @state()
   errorMessage: string = '';
@@ -170,7 +172,7 @@ export default class AddressTable extends LitElement {
         input.value = '';
       });
     } else {
-      this.errorMessage = 'Invalid address';
+      this.errorMessage = this.translations["addressTable.error.invalidAddress"] || 'Invalid address';
     }
   }
 
@@ -196,10 +198,10 @@ export default class AddressTable extends LitElement {
         <table class="data-table">
           <thead>
             <tr>
-              ${Object.entries(this.addressFields).map(([field, config]) => html`
+              ${Object.entries(this.addressFields).map(([_, config]) => html`
                 <th>${config.label}</th>
               `)}
-              <th>Quantity</th>
+              <th>${this.translations["addressTable.header.quantity"] || "Quantity"}</th>
               ${this.editable ? html`<th></th>` : ''}
             </tr>
           </thead>
@@ -224,15 +226,15 @@ export default class AddressTable extends LitElement {
         
         ${this.editable ? html`
           <div class="add-row-container">
-            <h4>Add New Address</h4>
+            <h4>${this.translations["addressTable.addNew.title"] || "Add New Address"}</h4>
             <div class="add-row-form">
               ${Object.entries(this.addressFields).map(([field, config]) => html`
                 <input type="text" name="${field}" placeholder="${config.label}" required>
               `)}
-              <input type="number" name="quantity" placeholder="Quantity" value="1" min="1" required>
+              <input type="number" name="quantity" placeholder="${this.translations["addressTable.placeholder.quantity"] || "Quantity"}" value="1" min="1" required>
               
               <button class="add-row-button" @click=${this.addRow}>
-                Add Row
+                ${this.translations["addressTable.button.addRow"] || "Add Row"}
               </button>
             </div>
             <p class="error-message">${this.errorMessage}</p>

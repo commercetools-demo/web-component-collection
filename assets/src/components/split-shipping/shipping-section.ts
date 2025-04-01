@@ -9,7 +9,8 @@ export default class SplitShippingShippingSection extends LitElement {
     cartItemId: { type: String, attribute: 'cart-item-id' },
     locale: { type: String },
     addresses: { type: Array },
-    addressQuantities: { type: Object }
+    addressQuantities: { type: Object },
+    translations: { type: Object }
   };
 
   cart: Cart | null = null;
@@ -17,10 +18,10 @@ export default class SplitShippingShippingSection extends LitElement {
   locale: string = 'en-US';
   addresses: ShippingAddress[] = [];
   addressQuantities: Record<string, number> = {};
+  translations: Record<string, string> = {};
   
   private currentLineItem: LineItem | null = null;
   private isLoading: boolean = false;
-  private errorMessage: string = '';
   private itemShippingAddresses: ShippingAddress[] = [];
 
   static styles = css`
@@ -87,6 +88,10 @@ export default class SplitShippingShippingSection extends LitElement {
       display: var(--button-container-display, flex);
       justify-content: var(--button-container-justify-content, flex-end);
     }
+    .quantity-summary {
+      display: flex;
+      gap: 16px;
+    }
   `;
 
   connectedCallback() {
@@ -142,7 +147,6 @@ export default class SplitShippingShippingSection extends LitElement {
       }
     } catch (error) {
       console.error('Error loading line item and addresses:', error);
-      this.errorMessage = error instanceof Error ? error.message : 'Failed to load data';
     } finally {
       this.isLoading = false;
       this.requestUpdate();
@@ -200,70 +204,51 @@ export default class SplitShippingShippingSection extends LitElement {
   }
 
   render() {
+    if (this.isLoading) {
+      return html`<div class="loading">Loading...</div>`;
+    }
+
+    if (!this.currentLineItem) {
+      return html`<div class="error-message">Line item not found</div>`;
+    }
+
+    const totalAllocated = this.getTotalAllocatedQuantity();
+    const remaining = this.currentLineItem.quantity - totalAllocated;
+    const isValid = totalAllocated === this.currentLineItem.quantity;
+
     return html`
       <div class="shipping-section">
-        ${this.isLoading ? 
-          html`<div class="loading">Loading data...</div>` : 
-          html`
-            ${this.currentLineItem ? 
-              html`
-                <h3 class="section-title">
-                  Split shipping of "${this.currentLineItem.name[this.locale] || this.currentLineItem.name['en-US'] || 'Item'}" 
-                  into different shipping addresses
-                </h3>
-                
-                ${this.errorMessage ? 
-                  html`<div class="error-message">${this.errorMessage}</div>` : 
-                  ''
-                }
-                
-                <div class="address-list">
-                  ${this.itemShippingAddresses.length > 0 ? 
-                    html`
-                      <h4 class="address-section-title">Shipping Addresses</h4>
-                      ${this.itemShippingAddresses.map(address => html`
-                        <shipping-address-item
-                          .address=${address}
-                          .maxQuantity=${this.currentLineItem?.quantity || 0}
-                          .locale=${this.locale}
-                          @quantity-changed=${this.handleQuantityChanged}
-                          @comment-changed=${this.handleCommentChanged}
-                        ></shipping-address-item>
-                      `)}
-                    ` : 
-                    html`<p>No shipping addresses available. Please add addresses in the address section first.</p>`
-                  }
-                </div>
-                
-                <div class="quantity-summary">
-                  <p>
-                    Total allocated: ${this.getTotalAllocatedQuantity()} of ${this.currentLineItem.quantity}
-                    ${!this.isQuantityValid() ? 
-                      html`<span class="error-message">
-                        ${this.getTotalAllocatedQuantity() > this.currentLineItem.quantity ? 
-                          'Total allocated quantity exceeds available quantity' : 
-                          'Total allocated quantity must equal available quantity'
-                        }
-                      </span>` : 
-                      ''
-                    }
-                  </p>
-                </div>
-                
-                <div class="button-container">
-                  <button 
-                    id="shipping-submit"
-                    ?disabled=${!this.isQuantityValid()}
-                    @click=${this.submitShippingAllocation}
-                  >
-                    Continue with Selected Allocation
-                  </button>
-                </div>
-              ` : 
-              html`<p>Line item not found in cart</p>`
-            }
-          `
-        }
+       
+        <div class="address-list">
+          ${this.itemShippingAddresses.map(address => html`
+            <shipping-address-item
+              .address=${address}
+              .translations=${this.translations}
+              @quantity-changed=${this.handleQuantityChanged}
+              @comment-changed=${this.handleCommentChanged}
+            ></shipping-address-item>
+          `)}
+        </div>
+         <div class="quantity-summary">
+          <div>${this.translations["shippingSection.totalQuantity"] || "Total quantity to allocate:"} ${this.currentLineItem.quantity}</div>
+          <div>${this.translations["shippingSection.allocatedQuantity"] || "Allocated quantity:"} ${totalAllocated}</div>
+          <div>${this.translations["shippingSection.remainingQuantity"] || "Remaining quantity:"} ${remaining}</div>
+          
+        </div>
+        ${!isValid && totalAllocated > 0 ? html`
+          <div class="error-message">
+            ${this.translations["shippingSection.quantityError"] || "The allocated quantity must match the line item quantity"}
+          </div>
+        ` : ''}
+
+        <div class="button-container">
+          <button
+            @click=${this.submitShippingAllocation}
+            ?disabled=${!isValid}
+          >
+            ${this.translations["shippingSection.submitButton"] || "Submit Allocation"}
+          </button>
+        </div>
       </div>
     `;
   }

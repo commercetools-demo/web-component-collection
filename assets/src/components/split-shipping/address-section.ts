@@ -46,7 +46,8 @@ export default class SplitShippingAddressSection extends LitElement {
     account: { type: Object },
     cartItemId: { type: String, attribute: 'cart-item-id' },
     locale: { type: String },
-    addressFields: { type: Object }
+    addressFields: { type: Object },
+    translations: { type: Object }
   };
 
   cart: Cart | null = null;
@@ -54,6 +55,7 @@ export default class SplitShippingAddressSection extends LitElement {
   cartItemId: string = '';
   locale: string = 'en-US';
   addressFields: AddressFields = {};
+  translations: Record<string, string> = {};
   
   private isDragging: boolean = false;
   private csvData: CsvRowData[] = [];
@@ -291,7 +293,7 @@ export default class SplitShippingAddressSection extends LitElement {
       const lines = csvContent.split(/\r?\n/).filter(line => line.trim() !== '');
       
       if (lines.length < 2) {
-        throw new Error('CSV file must contain at least a header row and one data row');
+        throw new Error(this.translations["addressSection.error.csvMinRows"] || 'CSV file must contain at least a header row and one data row');
       }
       
       // Get headers and validate required columns
@@ -302,7 +304,7 @@ export default class SplitShippingAddressSection extends LitElement {
       
       const missingColumns = requiredColumns.filter(col => !headers.includes(col));
       if (missingColumns.length > 0) {
-        throw new Error(`Missing required columns: ${missingColumns.join(', ')}`);
+        throw new Error(this.translations["addressSection.error.missingColumns"] || `Missing required columns: ${missingColumns.join(', ')}`);
       }
       
       // Parse data rows
@@ -327,7 +329,7 @@ export default class SplitShippingAddressSection extends LitElement {
       }
       
       if (this.csvData.length === 0) {
-        throw new Error('No valid data rows found in CSV file');
+        throw new Error(this.translations["addressSection.error.noValidData"] || 'No valid data rows found in CSV file');
       }
       
     } catch (error) {
@@ -366,7 +368,7 @@ export default class SplitShippingAddressSection extends LitElement {
     if (this.csvData.length === 0 || !this.cartItemId) {
       // display error
       this.hasError = true;
-      this.errorMessage = 'Please upload a valid CSV file or add addresses manually first';
+      this.errorMessage = this.translations["addressSection.error.noDataOrCartItem"] || 'Please upload a valid CSV file or add addresses manually first';
       return;
     }
 
@@ -437,15 +439,15 @@ export default class SplitShippingAddressSection extends LitElement {
   render() {
     return html`
       <div class="address-section">
-        <h4>Upload Shipping Addresses</h4>
+        <h4>${this.translations["addressSection.title.upload"] || "Upload Shipping Addresses"}</h4>
         
         <div class="dropzone ${this.isDragging ? 'dragging' : ''}">
           <div class="dropzone-icon">📁</div>
           <div class="dropzone-text">
-            Drag & drop your CSV file here or click to browse
+            ${this.translations["addressSection.dropzone.text"] || "Drag & drop your CSV file here or click to browse"}
           </div>
           <div class="dropzone-text">
-            <small>Accepted format: .csv with columns for ${Object.keys(this.addressFields).join(', ')}, quantity</small>
+            <small>${this.translations["addressSection.dropzone.formatHint"] || `Accepted format: .csv with columns for ${Object.keys(this.addressFields).join(', ')}, quantity`}</small>
           </div>
           <input 
             type="file" 
@@ -453,14 +455,14 @@ export default class SplitShippingAddressSection extends LitElement {
             accept=".csv" 
             @change=${this.handleFileInput}
           />
-          <button class="browse-button">Browse Files</button>
+          <button class="browse-button">${this.translations["addressSection.dropzone.browseButton"] || "Browse Files"}</button>
         </div>
         
-        <a href="${this.getComponentPath()}" download class="template-link">Download Template</a>
+        <a href="${this.getComponentPath()}" download class="template-link">${this.translations["addressSection.template.downloadLink"] || "Download Template"}</a>
         
         ${this.fileName ? html`
           <div class="file-info">
-            Selected file: ${this.fileName}
+            ${this.translations["addressSection.dropzone.fileInfo"] || "Selected file:"} ${this.fileName}
           </div>
         ` : ''}
         
@@ -470,10 +472,11 @@ export default class SplitShippingAddressSection extends LitElement {
           </div>
         ` : ''}
         
-          <h4>Shipping Addresses</h4>
+          <h4>${this.translations["addressSection.title.addresses"] || "Shipping Addresses"}</h4>
           <address-table 
             .addresses=${this.csvData}
             .addressFields=${this.addressFields}
+            .translations=${this.translations}
             @addresses-updated=${(e: CustomEvent) => { this.csvData = e.detail.addresses; }}
           ></address-table>
           
@@ -482,7 +485,7 @@ export default class SplitShippingAddressSection extends LitElement {
               id="address-submit"
               @click=${this.submitAddressData}
             >
-              Add addresses to your cart
+              ${this.translations["addressSection.submitButton"] || "Add addresses to your cart"}
             </button>
           </div>
       </div>

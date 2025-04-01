@@ -12,6 +12,10 @@ interface AddressFields {
   [key: string]: AddressField;
 }
 
+export interface SplitShippingTranslations {
+  [key: string]: string;
+}
+
 export default class SplitShipping extends LitElement {
   static properties = {
     baseUrl: { type: String, attribute: 'base-url' },
@@ -20,7 +24,8 @@ export default class SplitShipping extends LitElement {
     cartItemId: { type: String, attribute: 'cart-item-id' },
     isOpen: { type: Boolean, state: true },
     addressQuantities: { type: Object, state: true },
-    addressFields: { type: Object }
+    addressFields: { type: Object },
+    translations: { type: Object }
   };
 
   baseUrl: string = '';
@@ -38,6 +43,52 @@ export default class SplitShipping extends LitElement {
     state: { label: "State" },
     zipCode: { label: "Zip Code" },
     country: { label: "Country" }
+  };
+  translations: SplitShippingTranslations = {
+    // Modal
+    "modal.title": "Split Shipping",
+    "modal.addresses.title": "Addresses",
+    "modal.shipping.title": "Shipping",
+    "modal.shipping.infoMessage": "Please add shipping addresses in the address section first before proceeding to shipping allocation.",
+    
+    // Button text (default)
+    "button.label": "Split Shipping",
+    
+    // Address Section
+    "addressSection.title.upload": "Upload Shipping Addresses",
+    "addressSection.title.addresses": "Shipping Addresses",
+    "addressSection.dropzone.text": "Drag & drop your CSV file here or click to browse",
+    "addressSection.dropzone.formatHint": "Accepted format: .csv with columns for firstName, lastName, streetNumber, streetName, city, state, zipCode, country, quantity",
+    "addressSection.dropzone.browseButton": "Browse Files",
+    "addressSection.dropzone.fileInfo": "Selected file:",
+    "addressSection.template.downloadLink": "Download Template",
+    "addressSection.submitButton": "Add addresses to your cart",
+    "addressSection.error.csvMinRows": "CSV file must contain at least a header row and one data row",
+    "addressSection.error.missingColumns": "Missing required columns: ",
+    "addressSection.error.noValidData": "No valid data rows found in CSV file",
+    "addressSection.error.noDataOrCartItem": "Please upload a valid CSV file or add addresses manually first",
+    
+    // Address Table
+    "addressTable.header.quantity": "Quantity",
+    "addressTable.addNew.title": "Add New Address",
+    "addressTable.placeholder.quantity": "Quantity",
+    "addressTable.button.addRow": "Add Row",
+    "addressTable.error.invalidAddress": "Invalid address",
+    
+    // Shipping Section
+    "shippingSection.totalQuantity": "Total quantity to allocate: ",
+    "shippingSection.allocatedQuantity": "Allocated quantity: ",
+    "shippingSection.remainingQuantity": "Remaining quantity: ",
+    "shippingSection.submitButton": "Submit Allocation",
+    "shippingSection.quantityError": "The allocated quantity must match the line item quantity",
+    
+    // Address Item
+    "addressItem.label.quantity": "Quantity",
+    "addressItem.label.comment": "Comment",
+    "addressItem.placeholder.comment": "Add a comment for this address",
+    
+    // Success messages
+    "success.allocation": "Shipping allocation submitted successfully. You can now close the modal."
   };
   
   @state()
@@ -182,7 +233,7 @@ export default class SplitShipping extends LitElement {
       }
 
       // show success message
-      alert('Shipping allocation submitted successfully. You can now close the modal.');
+      alert(this.translations["success.allocation"] || 'Shipping allocation submitted successfully. You can now close the modal.');
 
       // Show success message
     } catch (error) {
@@ -245,7 +296,7 @@ export default class SplitShipping extends LitElement {
   render() {
     return html`
       <button class="split-shipping-button" @click=${this.openModal}>
-        <slot>Split Shipping</slot>
+        <slot>${this.translations["button.label"]}</slot>
       </button>
       
       ${this.isOpen ? html`
@@ -255,6 +306,7 @@ export default class SplitShipping extends LitElement {
           .cartItemId=${this.cartItemId}
           .addressQuantities=${this.addressQuantities}
           .addressFields=${this.addressFields}
+          .translations=${this.translations}
           @close=${this.closeModal}
           @addresses-selected=${this.handleAddressesSelected}
           @shipping-allocation-submitted=${this.handleShippingAllocationSubmitted}

@@ -13,7 +13,8 @@ export default class ShippingAddressItem extends LitElement {
   static properties = {
     address: { type: Object },
     maxQuantity: { type: Number, attribute: 'max-quantity' },
-    locale: { type: String }
+    locale: { type: String },
+    translations: { type: Object }
   };
 
   address: ShippingAddress = {
@@ -25,6 +26,7 @@ export default class ShippingAddressItem extends LitElement {
   
   maxQuantity: number = 0;
   locale: string = 'en-US';
+  translations: Record<string, string> = {};
 
   static styles = css`
     .address-item-wrapper {
@@ -143,7 +145,7 @@ export default class ShippingAddressItem extends LitElement {
           <div class="address-line">${this.formatAddress(this.address)}</div>        
         </div>
         <div class="quantity-control">
-          <label>Quantity:</label>
+          <label>${this.translations["addressItem.label.quantity"] || "Quantity"}:</label>
           <input 
             type="number" 
             min="0" 
@@ -155,13 +157,13 @@ export default class ShippingAddressItem extends LitElement {
         </div>
       </div>
       <div class="comment-section">
-        <label for="comment-${this.address.id}">Comment:</label>
+        <label for="comment-${this.address.id}">${this.translations["addressItem.label.comment"] || "Comment"}:</label>
         <input 
           type="text" 
           id="comment-${this.address.id}"
           class="comment-input"
           .value=${this.address.additionalAddressInfo || ''}
-          placeholder="Add a comment for this address"
+          placeholder="${this.translations["addressItem.placeholder.comment"] || "Add a comment for this address"}"
           @input=${this.handleCommentChange}
         />
         </div>
