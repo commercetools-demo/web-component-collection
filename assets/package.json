@@ -1,6 +1,6 @@
 {
   "name": "@commercetools-demo/web-components-assets",
-  "private": true,
+  "private": false,
   "version": "1.0.0",
   "type": "module",
   "files": [
