@@ -1,81 +1,107 @@
-# Frontend Web Components
+# Commercetools Web Components
 
-A collection of reusable web components built with TypeScript.
+This package provides reusable web components for Commercetools projects.
 
-## Components
+## Installation
 
-### [StoresMap](./src/components/stores-map/README.md)
-A store locator component with Google Maps integration that allows users to find and select stores from a list or map view.
-
-### [ProductPrices](./src/components/product-prices/README.md)
-A component that displays a list of available prices for a product SKU, showing channel-specific pricing from commercetools.
-
-### [StepVariantSelector](./src/components/step-variant-selector/README.md)
-A component that allows users to select a variant of a product by selecting values for a set of attributes.
-
-### [SplitShipping](./src/components/split-shipping/README.md)
-A component that allows users to split shipping between multiple addresses.
-
-
-## Use in React
-Add the following script to your HTML file or use the script tag in your React component:
-
-```html
-<script
-      src="<path-to-deployed-asset-connector>/components.js"
-      type="module"
-></script>
+```bash
+npm install @commercetools-demo/web-components-assets
+# or
+yarn add @commercetools-demo/web-components-assets
 ```
-Create a new component to wrap the component for example `StepVariantSelector.tsx`:
 
-```jsx
-import React, { useRef, useEffect } from 'react';
+## Usage
 
-interface Props {
-  baseurl?: string;
-  sku?: string;
-  selectors?: string;
-  locale?: string;
-  onChangeSku?: (sku: string) => void; // optional callback to handle events
-}
+### Import Components
 
-const StepVariantSelector: React.FC<Props> = ({ onChangeSku, ...props }) => {
-  const ref = useRef<HTMLDivElement>(null);
+You can import the components directly:
 
-  const eventListener = (event: any) => { // event listener for custom events
-    onChangeSku?.(event.detail.sku);
-  };
+```javascript
+import { StoresMap, ProductPrices } from '@commercetools-demo/web-components-assets';
 
-  useEffect(() => {
-    if (ref.current) {
-      const element = document.createElement('step-variant-selector');
-      element.addEventListener('sku-selected', eventListener); // add event listener for custom events
+// The components are automatically registered as custom elements
+// <ct-store-map></ct-store-map>
+// <ct-product-prices></ct-product-prices>
+```
 
-      Object.entries(props).forEach(([key, value]) => {
-        if (typeof value === 'string') {
-          element.setAttribute(key, value);
-        }
-      });
+### Individual Component Imports
 
-      ref.current.innerHTML = '';
-      ref.current.appendChild(element);
-    }
-  }, []);
+You can also import individual components to reduce bundle size:
 
+```javascript
+import StoresMap from '@commercetools-demo/web-components-assets/stores-map';
+import ProductPrices from '@commercetools-demo/web-components-assets/product-prices';
+```
+
+## Next.js Integration
+
+In Next.js applications, web components rely on browser APIs that aren't available during server-side rendering. 
+
+### Using Client Components
+
+With Next.js App Router, use client components:
+
+```javascript
+'use client'
+
+import { StoresMap, ProductPrices } from '@commercetools-demo/web-components-assets';
+
+export default function ProductPage() {
   return (
-    <div
-      ref={ref}
-      // override styles here
-      style={
-        {
-          '--selector-button-selected-background': 'rgb(23 58 95)',
-        } as React.CSSProperties
-      }
-    />
+    <div>
+      <h1>Product Details</h1>
+      <ct-product-prices sku="ABC123"></ct-product-prices>
+      <ct-store-map apikey="YOUR_API_KEY"></ct-store-map>
+    </div>
   );
-};
-
-export default StepVariantSelector;
+}
 ```
+
+### Pages Router
+
+With Pages Router, use the component in a useEffect hook:
+
+```javascript
+import { useEffect, useRef } from 'react';
+import { ProductPrices } from '@commercetools-demo/web-components-assets';
+
+export default function ProductPage() {
+  const containerRef = useRef(null);
+  
+  useEffect(() => {
+    // Components are initialized on the client-side only
+    const productPrices = document.createElement('ct-product-prices');
+    productPrices.setAttribute('sku', 'ABC123');
+    containerRef.current.appendChild(productPrices);
+    
+    return () => {
+      containerRef.current.innerHTML = '';
+    };
+  }, []);
+  
+  return (
+    <div>
+      <h1>Product Details</h1>
+      <div ref={containerRef}></div>
+    </div>
+  );
+}
+```
+
+## Available Components
+
+- `StoresMap`: Google Maps based store locator
+- `ProductPrices`: Display product prices
+- `StepVariantSelector`: Multi-step variant selection UI
+- `SplitShipping`: Split shipping functionality
+- `SplitShippingCheckout`: Checkout UI for split shipping
+- `AddressForm`: Reusable address form
+- `AddressPreview`: Address preview component
+- `DeliveryMethod`: Delivery method selection
+- `SplitItem`: Individual item in split shipping
+
+## License
+
+[MIT](https://opensource.org/licenses/MIT)
 
 

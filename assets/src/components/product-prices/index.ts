@@ -1,3 +1,6 @@
+// Add a check for browser environment at the top of the file
+const isBrowser = typeof window !== 'undefined' && typeof HTMLElement !== 'undefined';
+
 interface Money {
   currencyCode: string;
   centAmount: number;
@@ -166,6 +169,17 @@ class ProductPrices extends HTMLElement {
   }
 }
 
-customElements.define('product-prices', ProductPrices);
+// Only define the custom element in browser environments
+if (isBrowser) {
+  try {
+    customElements.define('ct-product-prices', ProductPrices);
+    // For backward compatibility
+    if (!customElements.get('product-prices')) {
+      customElements.define('product-prices', ProductPrices);
+    }
+  } catch (error) {
+    console.warn('Error registering ProductPrices:', error);
+  }
+}
 
 export default ProductPrices; 
