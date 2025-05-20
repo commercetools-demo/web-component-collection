@@ -13,7 +13,10 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "moduleDetection": "force",
-    "noEmit": true,
+
+    "declaration": true,
+    "declarationDir": "./public",
+    "emitDeclarationOnly": true, // Set to true if you only want .d.ts files
 
     /* Linting */
     "strict": true,

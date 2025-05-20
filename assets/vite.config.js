@@ -5,17 +5,18 @@ const __dirname = dirname(__filename);
 
 export default defineConfig({
   build: {
+    sourcemap: true,
     lib: {
       entry: resolve(__dirname, 'src/main.ts'),
-      name: 'Components',
-      fileName: 'components',
       formats: ['es']
     },
     outDir: resolve(__dirname, 'public'),
     rollupOptions: {
-      output: {
-        assetFileNames: 'assets/[name][extname]'
-      }
+        output: {
+          assetFileNames: '[name][extname]',
+          entryFileNames: '[name].js',
+          chunkFileNames: '[name]-[hash].js',
+        },   
     },
     copyPublicDir: true
   },

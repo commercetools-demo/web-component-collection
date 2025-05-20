@@ -1,15 +1,33 @@
 {
-  "name": "assets-typescript",
+  "name": "@commercetools-demo/web-components-assets",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
+  "files": [
+    "public/**/*",
+    "README.md",
+    "package.json",
+    "index.html"
+  ],
+  "homepage": "https://github.com/commercetools-demo/web-component-collection",
+  "exports": {
+    ".": {
+      "types": "./public/main.d.ts",
+      "require": "./public/main.js",
+      "import": "./public/main.js"
+    }
+  },
+  "main": "./public/main.js",
+  "module": "./public/main.js",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "vite build && tsc && yarn build:types",
+    "build:types": "dts-bundle-generator --out-file public/main.d.ts public/main.ts",
     "preview": "vite preview"
   },
   "devDependencies": {
     "@types/google.maps": "^3.58.1",
+    "dts-bundle-generator": "^9.5.1",
     "typescript": "^5.2.2",
     "vite": "^6.2.0"
   },
