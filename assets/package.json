@@ -22,6 +22,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build && tsc && yarn build:types",
+    "test": "echo 'test'",
     "build:types": "dts-bundle-generator --out-file public/main.d.ts public/main.ts",
     "preview": "vite preview"
   },
