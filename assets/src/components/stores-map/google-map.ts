@@ -1,34 +1,31 @@
+import { LitElement, html, css } from 'lit';
+import { customElement, property, state } from 'lit/decorators.js';
 import { Store } from '../../types/store';
 
-export class GoogleMap extends HTMLElement {
-  private map: google.maps.Map | null = null;
-  private markers: google.maps.Marker[] = [];
-  private stores: Store[] = [];
+@customElement('google-map')
+export class GoogleMap extends LitElement {
+  @state() private map: google.maps.Map | null = null;
+  @state() private markers: google.maps.Marker[] = [];
+  @property({ type: Array }) stores: Store[] = [];
 
-  constructor() {
-    super();
-    this.attachShadow({ mode: 'open' });
+  static styles = css`
+    :host {
+      display: block;
+      height: 100%;
+    }
+    #map {
+      height: 100%;
+      width: 100%;
+    }
+  `;
+
+  render() {
+    return html`<div id="map"></div>`;
   }
 
   async initialize(apiKey: string) {
-    if (!this.shadowRoot) return;
-
-    this.shadowRoot.innerHTML = `
-      <style>
-        :host {
-          display: block;
-          height: 100%;
-        }
-        #map {
-          height: 100%;
-          width: 100%;
-        }
-      </style>
-      <div id="map"></div>
-    `;
-
     await this.loadGoogleMapsScript(apiKey);
-    const mapElement = this.shadowRoot.getElementById('map');
+    const mapElement = this.shadowRoot?.getElementById('map');
     if (!mapElement) return;
 
     this.map = new google.maps.Map(mapElement, {
@@ -108,6 +105,4 @@ export class GoogleMap extends HTMLElement {
       this.map.setCenter({ lat, lng });
     }
   }
-}
-
-customElements.define('google-map', GoogleMap); 
+} 
