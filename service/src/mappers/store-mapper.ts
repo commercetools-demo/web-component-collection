@@ -19,6 +19,9 @@ export class StoreMapper {
         };
         return channel;
       }),
+      productSelectionIds: store.productSelections?.map((commercetoolsProductSelection) => {
+        return commercetoolsProductSelection.productSelection.id;
+      }) || [],
     };
   }
 }

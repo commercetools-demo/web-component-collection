@@ -13,6 +13,7 @@ export interface Store {
     lat?: number;
     lng?: number;
   };
+  productSelectionIds?: string[];
 }
 
 export interface StoreSelectedEvent extends CustomEvent {
